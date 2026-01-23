@@ -3,8 +3,11 @@ import requests
 from icalendar import Calendar
 from datetime import datetime, date, timedelta
 import pytz
+from sqlmodel import select
 from config import get_settings
 from logger import setup_logger
+from db import get_session
+from models import Grade, GradeCreate, GradeImportPayload, GradeOut
 
 settings = get_settings()
 logger = setup_logger("hyperplanning")
@@ -238,3 +241,80 @@ def get_stats():
     except Exception as e:
         logger.error(f"Error fetching Hyperplanning stats: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch Hyperplanning statistics")
+
+
+# === ENDPOINTS POUR LES NOTES ===
+
+@router.get("/grades", response_model=list[GradeOut])
+def get_grades():
+    """Récupérer toutes les notes, triées par date de création (plus récentes en premier)."""
+    try:
+        with get_session() as session:
+            statement = select(Grade).order_by(Grade.created_at.desc())
+            grades = list(session.exec(statement))
+            return grades
+    except Exception as e:
+        logger.error(f"Error fetching grades: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/grades/import")
+def import_grades(payload: GradeImportPayload):
+    """Importer des notes en masse (remplace toutes les notes existantes)."""
+    try:
+        with get_session() as session:
+            # Supprimer toutes les anciennes notes
+            statement = select(Grade)
+            old_grades = list(session.exec(statement))
+            for grade in old_grades:
+                session.delete(grade)
+
+            # Ajouter les nouvelles notes
+            new_grades = []
+            for grade_data in payload.grades:
+                grade = Grade(
+                    subject=grade_data.subject,
+                    date=grade_data.date,
+                    value=grade_data.value
+                )
+                session.add(grade)
+                new_grades.append(grade)
+
+            session.commit()
+
+            # Rafraîchir pour obtenir les IDs
+            for grade in new_grades:
+                session.refresh(grade)
+
+            return {
+                "message": f"{len(new_grades)} note(s) importée(s) avec succès",
+                "count": len(new_grades)
+            }
+
+    except Exception as e:
+        logger.error(f"Error importing grades: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/grades/clear")
+def clear_grades():
+    """Supprimer toutes les notes."""
+    try:
+        with get_session() as session:
+            statement = select(Grade)
+            grades = list(session.exec(statement))
+            count = len(grades)
+
+            for grade in grades:
+                session.delete(grade)
+
+            session.commit()
+
+            return {
+                "message": f"{count} note(s) supprimée(s)",
+                "count": count
+            }
+
+    except Exception as e:
+        logger.error(f"Error clearing grades: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

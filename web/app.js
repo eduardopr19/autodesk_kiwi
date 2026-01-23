@@ -48,9 +48,12 @@ function app() {
 
     // Hyperplanning Data
     hyperplanning: {
-      courses: [],
+      schedule: { display_date: '', courses: [] },
+      nextCourses: [],
       stats: [],
-      grades: [] // Removed mocks as per user request for sync
+      grades: [],
+      showImport: false,
+      importInput: ''
     },
     
     // Init
@@ -233,24 +236,73 @@ function app() {
     // Hyperplanning
     async loadHyperplanning() {
       try {
-        const [schedule, stats, nextCourses] = await Promise.all([
+        const [schedule, stats, nextCourses, grades] = await Promise.all([
           this.fetchJSON(`${this.API_BASE}/hyperplanning/courses`),
           this.fetchJSON(`${this.API_BASE}/hyperplanning/stats`),
-          this.fetchJSON(`${this.API_BASE}/hyperplanning/next-courses`)
+          this.fetchJSON(`${this.API_BASE}/hyperplanning/next-courses`),
+          this.fetchJSON(`${this.API_BASE}/hyperplanning/grades`)
         ]);
-        
+
         // Handle legacy array response if backend not updated yet (safety check)
         if (Array.isArray(schedule)) {
              this.hyperplanning.schedule = { display_date: "Aujourd'hui", courses: schedule };
         } else {
              this.hyperplanning.schedule = schedule;
         }
-        
+
         this.hyperplanning.stats = stats;
         this.hyperplanning.nextCourses = nextCourses;
+        this.hyperplanning.grades = grades;
       } catch (err) {
         console.error('Hyperplanning error:', err);
         this.showToast('Erreur chargement emploi du temps', 'error');
+      }
+    },
+
+    // Import/Clear Grades
+    async importGrades() {
+      try {
+        const input = this.hyperplanning.importInput.trim();
+        if (!input) {
+          this.showToast('Veuillez entrer des notes au format JSON', 'warning');
+          return;
+        }
+
+        let grades;
+        try {
+          grades = JSON.parse(input);
+        } catch (e) {
+          this.showToast('Format JSON invalide', 'error');
+          return;
+        }
+
+        if (!Array.isArray(grades)) {
+          this.showToast('Le JSON doit être un tableau de notes', 'error');
+          return;
+        }
+
+        const result = await this.sendJSON(`${this.API_BASE}/hyperplanning/grades/import`, { grades });
+        this.showToast(result.message, 'success');
+        this.hyperplanning.showImport = false;
+        this.hyperplanning.importInput = '';
+        await this.loadHyperplanning();
+      } catch (err) {
+        console.error('Import grades error:', err);
+        this.showToast('Erreur import notes', 'error');
+      }
+    },
+
+    async clearGrades() {
+      if (!confirm('Voulez-vous vraiment supprimer toutes les notes ?')) return;
+
+      try {
+        const result = await fetch(`${this.API_BASE}/hyperplanning/grades/clear`, { method: 'DELETE' });
+        const data = await result.json();
+        this.showToast(data.message, 'success');
+        await this.loadHyperplanning();
+      } catch (err) {
+        console.error('Clear grades error:', err);
+        this.showToast('Erreur suppression notes', 'error');
       }
     },
     // Utilities

@@ -276,7 +276,35 @@
 
         <!-- Colonne Droite: Notes & Infos -->
         <div class="hp-column">
-          <h3>📝 Dernières notes</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin: 0;">📝 Dernières notes</h3>
+            <button @click="hyperplanning.showImport = !hyperplanning.showImport" class="btn" style="font-size: 0.85rem; padding: 5px 10px;">
+              <span x-show="!hyperplanning.showImport">➕ Importer</span>
+              <span x-show="hyperplanning.showImport">✖️ Fermer</span>
+            </button>
+          </div>
+
+          <!-- Import Section -->
+          <div x-show="hyperplanning.showImport" class="card" style="margin-bottom: 15px; background: var(--panel-hover);">
+            <h4 style="margin-top: 0; font-size: 0.9rem;">Importer des notes (JSON)</h4>
+            <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 10px;">
+              Format: <code style="background: var(--bg); padding: 2px 5px; border-radius: 3px;">[{"subject": "Matière", "date": "13 déc.", "value": 15.5}]</code>
+            </p>
+            <textarea
+              x-model="hyperplanning.importInput"
+              rows="6"
+              placeholder='[
+  {"subject": "Admin réseau", "date": "13 déc.", "value": 18.39},
+  {"subject": "Anglais", "date": "9 déc.", "value": 14.50}
+]'
+              style="width: 100%; padding: 10px; background: var(--bg); color: var(--text); border: 1px solid var(--muted); border-radius: 5px; font-family: monospace; font-size: 0.85rem; resize: vertical;"
+            ></textarea>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+              <button @click="importGrades()" class="primary" style="flex: 1;">✅ Importer</button>
+              <button @click="clearGrades()" class="danger">🗑️ Tout supprimer</button>
+            </div>
+          </div>
+
           <div class="card">
             <ul class="list">
               <template x-for="grade in hyperplanning.grades" :key="grade.id">
@@ -292,7 +320,7 @@
               </template>
             </ul>
             <div x-show="hyperplanning.grades.length === 0" class="empty">
-              Aucune note récente (Synchronisé).
+              Aucune note. Cliquez sur "Importer" pour ajouter vos notes.
             </div>
           </div>
 

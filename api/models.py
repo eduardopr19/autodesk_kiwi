@@ -90,3 +90,36 @@ class TaskOut(SQLModel):
 class BulkDeletePayload(SQLModel):
     """Payload pour suppression groupée"""
     ids: list[int] = Field(min_length=1, max_length=100)
+
+
+# === GRADES (Notes) ===
+
+class Grade(SQLModel, table=True):
+    """Modèle de note avec validation"""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    subject: str = Field(index=True, min_length=1, max_length=200)
+    date: str = Field(max_length=50)  # Format: "13 déc."
+    value: float = Field(ge=0, le=20)  # Note sur 20
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class GradeCreate(SQLModel):
+    """Payload pour créer une note"""
+    subject: str = Field(min_length=1, max_length=200)
+    date: str = Field(max_length=50)
+    value: float = Field(ge=0, le=20)
+
+
+class GradeOut(SQLModel):
+    """Réponse API avec tous les champs"""
+    id: int
+    subject: str
+    date: str
+    value: float
+    created_at: datetime
+
+
+class GradeImportPayload(SQLModel):
+    """Payload pour import de notes en masse"""
+    grades: list[GradeCreate] = Field(min_length=1, max_length=100)
