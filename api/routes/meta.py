@@ -8,7 +8,7 @@ settings = get_settings()
 
 @router.get("/health")
 def health():
-    """Health check avec infos système"""
+    """Health check with system info"""
     return {
         "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -19,7 +19,7 @@ def health():
 
 @router.get("/overview")
 def overview():
-    """Résumé du jour - mockup pour MVP"""
+    """Daily summary - mockup for MVP"""
     return {
         "quote": "Focus on progress, not perfection.",
         "next_event": {

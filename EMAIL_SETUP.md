@@ -1,91 +1,91 @@
-# Configuration E-mail pour AutoDesk Kiwi
+# Email Configuration for AutoDesk Kiwi
 
-Ce guide vous explique comment configurer l'accès aux e-mails Outlook et Protonmail.
+This guide explains how to configure Outlook and Protonmail email access.
 
-## 📧 Configuration Outlook (Microsoft 365)
+## Configuration Outlook (Microsoft 365)
 
-### Étape 1: Créer une application Azure AD
+### Step 1: Create an Azure AD Application
 
-1. Allez sur [Azure Portal](https://portal.azure.com)
-2. Naviguez vers **Azure Active Directory** > **App registrations**
-3. Cliquez sur **New registration**
-4. Remplissez:
+1. Go to [Azure Portal](https://portal.azure.com)
+2. Navigate to **Azure Active Directory** > **App registrations**
+3. Click **New registration**
+4. Fill in:
    - **Name**: `AutoDesk Kiwi Email`
    - **Supported account types**: `Accounts in any organizational directory and personal Microsoft accounts`
    - **Redirect URI**:
      - Type: `Web`
      - URL: `http://localhost:8000/email/outlook/callback`
-5. Cliquez sur **Register**
+5. Click **Register**
 
-### Étape 2: Obtenir les identifiants
+### Step 2: Get Credentials
 
-1. Sur la page de votre application, copiez l'**Application (client) ID**
-2. Allez dans **Certificates & secrets**
-3. Cliquez sur **New client secret**
-4. Donnez une description (ex: "AutoDesk Kiwi") et choisissez une expiration
-5. Copiez la **Value** du secret (vous ne pourrez plus la voir après!)
+1. On your application page, copy the **Application (client) ID**
+2. Go to **Certificates & secrets**
+3. Click **New client secret**
+4. Give a description (e.g., "AutoDesk Kiwi") and choose an expiration
+5. Copy the secret **Value** (you won't be able to see it again!)
 
-### Étape 3: Configurer les permissions
+### Step 3: Configure Permissions
 
-1. Allez dans **API permissions**
-2. Cliquez sur **Add a permission**
-3. Choisissez **Microsoft Graph**
-4. Sélectionnez **Delegated permissions**
-5. Ajoutez: `Mail.Read`
-6. Cliquez sur **Add permissions**
-7. (Optionnel) Cliquez sur **Grant admin consent** si vous êtes admin
+1. Go to **API permissions**
+2. Click **Add a permission**
+3. Choose **Microsoft Graph**
+4. Select **Delegated permissions**
+5. Add: `Mail.Read`
+6. Click **Add permissions**
+7. (Optional) Click **Grant admin consent** if you're an admin
 
-### Étape 4: Ajouter à .env
+### Step 4: Add to .env
 
-Créez un fichier `.env` dans le dossier `api/` avec:
+Create a `.env` file in the `api/` folder with:
 
 ```env
-OUTLOOK_CLIENT_ID=votre-application-client-id
-OUTLOOK_CLIENT_SECRET=votre-client-secret
+OUTLOOK_CLIENT_ID=your-application-client-id
+OUTLOOK_CLIENT_SECRET=your-client-secret
 OUTLOOK_TENANT_ID=common
 OUTLOOK_REDIRECT_URI=http://localhost:8000/email/outlook/callback
 ```
 
-## 🔐 Configuration Protonmail
+## Protonmail Configuration
 
-### Étape 1: Obtenir la clé API
+### Step 1: Get API Key
 
-1. Connectez-vous à [Protonmail](https://mail.proton.me)
-2. Allez dans **Settings** (⚙️)
-3. Naviguez vers **Security** > **API Access**
-4. Cliquez sur **Generate API Key**
-5. Donnez un nom (ex: "AutoDesk Kiwi")
-6. Copiez la clé générée
+1. Log in to [Protonmail](https://mail.proton.me)
+2. Go to **Settings** (gear icon)
+3. Navigate to **Security** > **API Access**
+4. Click **Generate API Key**
+5. Give it a name (e.g., "AutoDesk Kiwi")
+6. Copy the generated key
 
-### Étape 2: Ajouter à .env
+### Step 2: Add to .env
 
-Ajoutez dans votre fichier `.env`:
+Add to your `.env` file:
 
 ```env
-PROTONMAIL_API_KEY=votre-cle-api-protonmail
+PROTONMAIL_API_KEY=your-protonmail-api-key
 PROTONMAIL_API_URL=https://api.protonmail.ch
 ```
 
-## 🚀 Utilisation
+## Usage
 
-### 1. Première connexion Outlook
+### 1. First Outlook Login
 
-1. Démarrez l'application
-2. Allez sur `http://localhost:8000/email/outlook/login`
-3. Copiez l'URL retournée et ouvrez-la dans votre navigateur
-4. Connectez-vous avec votre compte Microsoft
-5. Acceptez les permissions
-6. Vous serez redirigé vers la page de callback
+1. Start the application
+2. Go to `http://localhost:8000/email/outlook/login`
+3. Copy the returned URL and open it in your browser
+4. Log in with your Microsoft account
+5. Accept the permissions
+6. You will be redirected to the callback page
 
-### 2. Vérifier les e-mails
+### 2. Check Emails
 
 - **Outlook**: `http://localhost:8000/email/outlook/unread`
 - **Protonmail**: `http://localhost:8000/email/proton/unread`
-- **Résumé**: `http://localhost:8000/email/summary`
+- **Summary**: `http://localhost:8000/email/summary`
 
-## ⚠️ Notes importantes
+## Important Notes
 
-- Les tokens OAuth2 sont stockés en mémoire et seront perdus au redémarrage
-- Pour une utilisation en production, utilisez une base de données sécurisée
-- Ne partagez jamais vos fichiers `.env` ou vos secrets
-- Les clés API Protonmail peuvent avoir des limitations de taux
+- OAuth2 tokens are stored in memory and will be lost on restart
+- For production use, use a secure database
+- Never share your `.env` files or secrets
+- Protonmail API keys may have rate limitations

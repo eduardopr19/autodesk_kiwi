@@ -8,12 +8,12 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-# Charge les variables du fichier .env
+# Load environment variables from .env file
 load_dotenv()
 
 router = APIRouter(prefix="/email", tags=["Email"])
 
-# --- MODÈLES DE DONNÉES ---
+# --- DATA MODELS ---
 class EmailItem(BaseModel):
     subject: str
     sender: str
@@ -24,11 +24,11 @@ class EmailSummary(BaseModel):
     emails: List[EmailItem] = []
     error: str = ""
 
-# --- ROUTE PROTON (VIA BRIDGE) ---
+# --- PROTON MAIL ROUTE (VIA BRIDGE) ---
 
 @router.get("/proton/unread", response_model=EmailSummary)
 def get_proton_unread():
-    """Récupère les emails via IMAP local (Bridge)"""
+    """Fetch unread emails via local IMAP (Proton Bridge)"""
 
     # Use environment variables for credentials
     host = os.getenv("PROTON_BRIDGE_HOST", "127.0.0.1")
@@ -37,28 +37,28 @@ def get_proton_unread():
     password = os.getenv("PROTON_BRIDGE_PASS")
 
     if not all([user, password]):
-        return EmailSummary(count_unread=0, error="Configuration .env incomplète (PROTON_BRIDGE_USER/PASS)")
+        return EmailSummary(count_unread=0, error="Incomplete .env configuration (PROTON_BRIDGE_USER/PASS)")
 
-    print(f"🔍 DEBUG: Connexion sur {host}:{port} avec user='{user}'")
+    print(f"DEBUG: Connecting to {host}:{port} with user='{user}'")
 
     try:
-        # 1. Connexion au Bridge
+        # 1. Connect to Bridge
         mail = imaplib.IMAP4(host, port)
-        
+
         # 2. STARTTLS
         try:
             mail.starttls()
         except Exception as e:
-            # Continuer sans STARTTLS si échec
+            # Continue without STARTTLS if it fails
             pass
-        
-        # 3. Authentification
+
+        # 3. Authentication
         mail.login(user, password)
-        
-        # 4. Sélection de la boite de réception
+
+        # 4. Select inbox
         mail.select("inbox")
 
-        # 5. Recherche des mails non lus
+        # 5. Search for unread emails
         status, messages = mail.search(None, "(UNSEEN)")
         
         email_ids = messages[0].split()
@@ -66,20 +66,20 @@ def get_proton_unread():
         
         email_list = []
         
-        # On récupère les détails des 5 derniers mails non lus
-        # reversed() permet d'avoir les plus récents en premier
+        # Get details of the last 5 unread emails
+        # reversed() to get most recent first
         for e_id in reversed(email_ids[-5:]):
             try:
-                # Récupère seulement l'en-tête (plus rapide)
+                # Fetch only header (faster)
                 _, msg_data = mail.fetch(e_id, "(RFC822.HEADER)")
                 
                 for response_part in msg_data:
                     if isinstance(response_part, tuple):
                         msg = email.message_from_bytes(response_part[1])
                         
-                        # Décodage du Sujet
+                        # Decode subject
                         subject_header = msg["Subject"]
-                        subject_text = "(Sans sujet)"
+                        subject_text = "(No subject)"
                         if subject_header:
                             decoded_list = decode_header(subject_header)
                             subject_text = ""
@@ -89,8 +89,8 @@ def get_proton_unread():
                                 else:
                                     subject_text += str(text)
 
-                        # Décodage de l'Expéditeur
-                        from_header = msg.get("From", "Inconnu")
+                        # Decode sender
+                        from_header = msg.get("From", "Unknown")
                         
                         # Date
                         date_header = msg.get("Date", "")
@@ -101,26 +101,26 @@ def get_proton_unread():
                             date=date_header
                         ))
             except Exception as e:
-                print(f"Erreur lecture mail {e_id}: {e}")
+                print(f"Error reading email {e_id}: {e}")
                 continue
 
         mail.close()
         mail.logout()
-        
+
         return EmailSummary(
-            count_unread=count, 
+            count_unread=count,
             emails=email_list
         )
 
     except ConnectionRefusedError:
-        return EmailSummary(count_unread=0, error="Proton Bridge n'est pas lancé ou port incorrect")
+        return EmailSummary(count_unread=0, error="Proton Bridge not running or wrong port")
     except imaplib.IMAP4.error as e:
-        return EmailSummary(count_unread=0, error=f"Erreur IMAP (Login?): {str(e)}")
+        return EmailSummary(count_unread=0, error=f"IMAP error (Login?): {str(e)}")
     except Exception as e:
-        print(f"Erreur Inconnue: {e}")
-        return EmailSummary(count_unread=0, error=f"Erreur: {str(e)}")
+        print(f"Unknown error: {e}")
+        return EmailSummary(count_unread=0, error=f"Error: {str(e)}")
 
-# --- ROUTE HISTORIQUE PAGINÉ (Lazy Loading) ---
+# --- PAGINATED HISTORY ROUTE (Lazy Loading) ---
 
 class EmailHistoryResponse(BaseModel):
     total_count: int
@@ -130,7 +130,7 @@ class EmailHistoryResponse(BaseModel):
 
 @router.get("/proton/history", response_model=EmailHistoryResponse)
 def get_proton_history(page: int = 1, per_page: int = 20):
-    """Récupère l'historique des emails avec pagination (style Twitter)"""
+    """Fetch email history with pagination (infinite scroll style)"""
     
     host = os.getenv("PROTON_BRIDGE_HOST", "127.0.0.1")
     port = int(os.getenv("PROTON_BRIDGE_PORT", "1143"))
@@ -138,10 +138,10 @@ def get_proton_history(page: int = 1, per_page: int = 20):
     password = os.getenv("PROTON_BRIDGE_PASS")
     
     if not all([user, password]):
-        return EmailHistoryResponse(total_count=0, error="Configuration .env incomplète")
+        return EmailHistoryResponse(total_count=0, error="Incomplete .env configuration")
     
     try:
-        # Connexion
+        # Connection
         mail = imaplib.IMAP4(host, port)
         try:
             mail.starttls()
@@ -149,19 +149,19 @@ def get_proton_history(page: int = 1, per_page: int = 20):
             pass
         mail.login(user, password)
         mail.select("inbox")
-        
-        # Recherche TOUS les emails (pas juste UNSEEN)
+
+        # Search ALL emails (not just UNSEEN)
         status, messages = mail.search(None, "ALL")
         
         if status != "OK":
-            return EmailHistoryResponse(total_count=0, error="Erreur recherche emails")
+            return EmailHistoryResponse(total_count=0, error="Email search error")
         
         email_ids = messages[0].split()
         total_count = len(email_ids)
         
-        # Pagination: calculer les indices
-        # IMPORTANT: On garde l'ordre chronologique (ancien → récent)
-        # Pas de reversed() ici pour avoir l'historique complet dans l'ordre
+        # Pagination: calculate indices
+        # IMPORTANT: Keep chronological order (old → recent)
+        # No reversed() here to have complete history in order
         start_idx = (page - 1) * per_page
         end_idx = start_idx + per_page
         page_ids = email_ids[start_idx:end_idx]
@@ -176,9 +176,9 @@ def get_proton_history(page: int = 1, per_page: int = 20):
                     if isinstance(response_part, tuple):
                         msg = email.message_from_bytes(response_part[1])
                         
-                        # Décodage du sujet
+                        # Decode subject
                         subject_header = msg["Subject"]
-                        subject_text = "(Sans sujet)"
+                        subject_text = "(No subject)"
                         if subject_header:
                             decoded_list = decode_header(subject_header)
                             subject_text = ""
@@ -188,7 +188,7 @@ def get_proton_history(page: int = 1, per_page: int = 20):
                                 else:
                                     subject_text += str(text)
                         
-                        from_header = msg.get("From", "Inconnu")
+                        from_header = msg.get("From", "Unknown")
                         date_header = msg.get("Date", "")
                         
                         email_list.append(EmailItem(
@@ -197,7 +197,7 @@ def get_proton_history(page: int = 1, per_page: int = 20):
                             date=date_header
                         ))
             except Exception as e:
-                print(f"Erreur lecture mail {e_id}: {e}")
+                print(f"Error reading email {e_id}: {e}")
                 continue
         
         mail.close()
@@ -212,14 +212,14 @@ def get_proton_history(page: int = 1, per_page: int = 20):
         )
         
     except ConnectionRefusedError:
-        return EmailHistoryResponse(total_count=0, error="Proton Bridge non lancé")
+        return EmailHistoryResponse(total_count=0, error="Proton Bridge not running")
     except imaplib.IMAP4.error as e:
-        return EmailHistoryResponse(total_count=0, error=f"Erreur IMAP: {str(e)}")
+        return EmailHistoryResponse(total_count=0, error=f"IMAP error: {str(e)}")
     except Exception as e:
-        print(f"Erreur historique: {e}")
-        return EmailHistoryResponse(total_count=0, error=f"Erreur: {str(e)}")
+        print(f"History error: {e}")
+        return EmailHistoryResponse(total_count=0, error=f"Error: {str(e)}")
 
-# --- ROUTE ENVOI EMAIL (SMTP) ---
+# --- SEND EMAIL ROUTE (SMTP) ---
 
 class SendEmailRequest(BaseModel):
     to: str
@@ -228,7 +228,7 @@ class SendEmailRequest(BaseModel):
 
 @router.post("/proton/send")
 def send_proton_email(email_data: SendEmailRequest):
-    """Envoie un email via SMTP Proton Bridge"""
+    """Send an email via SMTP Proton Bridge"""
     import smtplib
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
@@ -239,17 +239,17 @@ def send_proton_email(email_data: SendEmailRequest):
     smtp_pass = os.getenv("PROTON_BRIDGE_SMTP_PASS")
     
     if not all([smtp_user, smtp_pass]):
-        return {"success": False, "error": "Configuration SMTP incomplète"}
+        return {"success": False, "error": "Incomplete SMTP configuration"}
     
     try:
-        # Créer le message
+        # Create message
         msg = MIMEMultipart()
         msg['From'] = smtp_user
         msg['To'] = email_data.to
         msg['Subject'] = email_data.subject
         msg.attach(MIMEText(email_data.body, 'plain'))
         
-        # Connexion SMTP
+        # SMTP connection
         server = smtplib.SMTP(smtp_host, smtp_port)
         try:
             server.starttls()
@@ -257,20 +257,20 @@ def send_proton_email(email_data: SendEmailRequest):
             pass
         server.login(smtp_user, smtp_pass)
         
-        # Envoi
+        # Send
         server.send_message(msg)
         server.quit()
-        
-        return {"success": True, "message": "Email envoyé avec succès"}
+
+        return {"success": True, "message": "Email sent successfully"}
         
     except Exception as e:
-        print(f"Erreur envoi email: {e}")
+        print(f"Email send error: {e}")
         return {"success": False, "error": str(e)}
 
-# --- ROUTE RÉSUMÉ GLOBAL (Pour compatibilité future) ---
+# --- GLOBAL SUMMARY ROUTE (For future compatibility) ---
 @router.get("/summary")
 def get_summary():
-    # Pour l'instant, on ne renvoie que Proton car Outlook est désactivé
+    # For now, only return Proton since Outlook is disabled
     proton_data = get_proton_unread()
     return {
         "outlook": 0,

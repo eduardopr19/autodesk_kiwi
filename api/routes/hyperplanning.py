@@ -243,11 +243,11 @@ def get_stats():
         raise HTTPException(status_code=500, detail="Failed to fetch Hyperplanning statistics")
 
 
-# === ENDPOINTS POUR LES NOTES ===
+# === GRADES ENDPOINTS ===
 
 @router.get("/grades", response_model=list[GradeOut])
 def get_grades():
-    """Récupérer toutes les notes, triées par date de création (plus récentes en premier)."""
+    """Fetch all grades, sorted by creation date (most recent first)."""
     try:
         with get_session() as session:
             statement = select(Grade).order_by(Grade.created_at.desc())
@@ -260,16 +260,16 @@ def get_grades():
 
 @router.post("/grades/import")
 def import_grades(payload: GradeImportPayload):
-    """Importer des notes en masse (remplace toutes les notes existantes)."""
+    """Bulk import grades (replaces all existing grades)."""
     try:
         with get_session() as session:
-            # Supprimer toutes les anciennes notes
+            # Delete all old grades
             statement = select(Grade)
             old_grades = list(session.exec(statement))
             for grade in old_grades:
                 session.delete(grade)
 
-            # Ajouter les nouvelles notes
+            # Add new grades
             new_grades = []
             for grade_data in payload.grades:
                 grade = Grade(
@@ -282,12 +282,12 @@ def import_grades(payload: GradeImportPayload):
 
             session.commit()
 
-            # Rafraîchir pour obtenir les IDs
+            # Refresh to get IDs
             for grade in new_grades:
                 session.refresh(grade)
 
             return {
-                "message": f"{len(new_grades)} note(s) importée(s) avec succès",
+                "message": f"{len(new_grades)} grade(s) imported successfully",
                 "count": len(new_grades)
             }
 
@@ -298,7 +298,7 @@ def import_grades(payload: GradeImportPayload):
 
 @router.delete("/grades/clear")
 def clear_grades():
-    """Supprimer toutes les notes."""
+    """Delete all grades."""
     try:
         with get_session() as session:
             statement = select(Grade)
@@ -311,7 +311,7 @@ def clear_grades():
             session.commit()
 
             return {
-                "message": f"{count} note(s) supprimée(s)",
+                "message": f"{count} grade(s) deleted",
                 "count": count
             }
 

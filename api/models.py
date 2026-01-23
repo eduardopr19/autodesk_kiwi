@@ -4,13 +4,13 @@ from datetime import datetime, timezone
 from sqlmodel import SQLModel, Field
 from pydantic import field_validator
 
-# Constantes
+# Constants
 VALID_STATUS = {"todo", "doing", "done", "archived"}
 VALID_PRIORITY = {"low", "normal", "high"}
 
 
 class Task(SQLModel, table=True):
-    """Modèle de tâche avec validation"""
+    """Task model with validation"""
     
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str = Field(index=True, min_length=1, max_length=200)
@@ -38,9 +38,9 @@ class Task(SQLModel, table=True):
         return v
 
 
-# Schémas E/S
+# I/O Schemas
 class TaskCreate(SQLModel):
-    """Payload pour créer une tâche"""
+    """Payload to create a task"""
     title: str = Field(min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, max_length=2000)
     priority: str = Field(default="normal")
@@ -54,7 +54,7 @@ class TaskCreate(SQLModel):
 
 
 class TaskUpdate(SQLModel):
-    """Payload pour mettre à jour une tâche (tous champs optionnels)"""
+    """Payload to update a task (all fields optional)"""
     title: Optional[str] = Field(default=None, min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, max_length=2000)
     priority: Optional[str] = None
@@ -76,7 +76,7 @@ class TaskUpdate(SQLModel):
 
 
 class TaskOut(SQLModel):
-    """Réponse API avec tous les champs"""
+    """API response with all fields"""
     id: int
     title: str
     description: Optional[str]
@@ -88,31 +88,31 @@ class TaskOut(SQLModel):
 
 
 class BulkDeletePayload(SQLModel):
-    """Payload pour suppression groupée"""
+    """Payload for bulk deletion"""
     ids: list[int] = Field(min_length=1, max_length=100)
 
 
-# === GRADES (Notes) ===
+# === GRADES ===
 
 class Grade(SQLModel, table=True):
-    """Modèle de note avec validation"""
+    """Grade model with validation"""
 
     id: Optional[int] = Field(default=None, primary_key=True)
     subject: str = Field(index=True, min_length=1, max_length=200)
-    date: str = Field(max_length=50)  # Format: "13 déc."
-    value: float = Field(ge=0, le=20)  # Note sur 20
+    date: str = Field(max_length=50)  # Format: "13 Dec."
+    value: float = Field(ge=0, le=20)  # Grade out of 20
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class GradeCreate(SQLModel):
-    """Payload pour créer une note"""
+    """Payload to create a grade"""
     subject: str = Field(min_length=1, max_length=200)
     date: str = Field(max_length=50)
     value: float = Field(ge=0, le=20)
 
 
 class GradeOut(SQLModel):
-    """Réponse API avec tous les champs"""
+    """API response with all fields"""
     id: int
     subject: str
     date: str
@@ -121,5 +121,5 @@ class GradeOut(SQLModel):
 
 
 class GradeImportPayload(SQLModel):
-    """Payload pour import de notes en masse"""
+    """Payload for bulk grade import"""
     grades: list[GradeCreate] = Field(min_length=1, max_length=100)

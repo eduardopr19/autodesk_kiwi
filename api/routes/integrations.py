@@ -8,13 +8,13 @@ router = APIRouter(prefix="/external", tags=["integrations"])
 settings = get_settings()
 logger = setup_logger("integrations")
 
-# Session HTTP réutilisable
+# Reusable HTTP session
 SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": settings.user_agent})
 
 
 def _get_json(url: str, params: dict, timeout: Optional[float] = None):
-    """Helper pour appels API externes avec gestion d'erreurs robuste"""
+    """Helper for external API calls with robust error handling"""
     try:
         response = SESSION.get(
             url,
@@ -39,7 +39,7 @@ def _get_json(url: str, params: dict, timeout: Optional[float] = None):
 
 @router.get("/weather")
 def weather(lat: float = Query(...), lon: float = Query(...)):
-    """Météo actuelle (Open-Meteo)"""
+    """Current weather data from Open-Meteo API"""
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": lat,
@@ -64,7 +64,7 @@ def weather(lat: float = Query(...), lon: float = Query(...)):
 
 @router.get("/forecast")
 def forecast(lat: float = Query(...), lon: float = Query(...)):
-    """Prévisions horaires + journalières"""
+    """Hourly and daily weather forecast from Open-Meteo API"""
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": lat,
@@ -79,7 +79,7 @@ def forecast(lat: float = Query(...), lon: float = Query(...)):
     hourly = data.get("hourly", {})
     daily = data.get("daily", {})
 
-    # Format horaire
+    # Format hourly data
     hours = []
     for i, time in enumerate(hourly.get("time", [])):
         hours.append({
@@ -89,7 +89,7 @@ def forecast(lat: float = Query(...), lon: float = Query(...)):
             "code": hourly.get("weathercode", [None])[i],
         })
 
-    # Format journalier
+    # Format daily data
     days = []
     for i, date in enumerate(daily.get("time", [])):
         days.append({
@@ -106,7 +106,7 @@ def forecast(lat: float = Query(...), lon: float = Query(...)):
 
 @router.get("/reverse-geocode")
 def reverse_geocode(lat: float = Query(...), lon: float = Query(...)):
-    """Géocodage inverse (BigDataCloud - gratuit et fiable)"""
+    """Reverse geocoding using BigDataCloud API (free and reliable)"""
     url = "https://api.bigdatacloud.net/data/reverse-geocode-client"
     params = {
         "latitude": lat,
