@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AutoDesk Kiwi - Hub personnel de productivité">
+  <title>AutoDesk Kiwi - Productivité</title>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body x-data="app()" x-init="init()">
+
+  <!-- Toast Container -->
+  <div class="toast-container">
+    <template x-for="toast in toasts" :key="toast.id">
+      <div class="toast" :class="toast.type" x-show="toast.show" x-transition>
+        <span class="toast-icon" x-text="toast.icon"></span>
+        <span class="toast-message" x-text="toast.message"></span>
+        <button class="toast-close" @click="removeToast(toast.id)">×</button>
+      </div>
+    </template>
+  </div>
+
+  <!-- Header -->
+  <header class="topbar">
+    <h1>🥝 AutoDesk Kiwi</h1>
+    <nav class="tabs">
+      <button class="tab" :class="{ active: currentView === 'today' }" @click="currentView = 'today'">
+        📅 Aujourd'hui
+      </button>
+      <button class="tab" :class="{ active: currentView === 'tasks' }" @click="currentView = 'tasks'">
+        ✅ Tâches
+      </button>
+      <button class="tab" :class="{ active: currentView === 'weather' }" @click="currentView = 'weather'">
+        🌤️ Météo
+      </button>
+      <button class="tab" :class="{ active: currentView === 'hyperplanning' }" @click="currentView = 'hyperplanning'">
+        🎓 Hyperplanning
+      </button>
+      <button class="tab" :class="{ active: currentView === 'settings' }" @click="currentView = 'settings'">
+        ⚙️ Paramètres
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    
+    <!-- Vue: Today -->
+    <section x-show="currentView === 'today'" class="view">
+      <h2>📅 Résumé du jour</h2>
+      
+      <div class="card" x-show="overview.quote">
+        <p><strong>💬 Citation:</strong> <span x-text="overview.quote"></span></p>
+        <p x-show="overview.next_event"><strong>📆 Prochain événement:</strong> 
+          <span x-text="overview.next_event?.title"></span> à 
+          <span x-text="overview.next_event?.time"></span>
+          (<span x-text="overview.next_event?.room"></span>)
+        </p>
+        <p x-show="weather.current.temp"><strong>🌡️ Météo <span x-text="weather.location"></span>:</strong> 
+          <span x-text="Math.round(weather.current.temp)"></span>°C - 
+          <span x-text="getWeatherDesc(weather.current.weathercode)"></span>
+        </p>
+        <p x-show="overview.unread"><strong>📬 Non lus:</strong> 
+          Proton: <span x-text="overview.unread?.proton"></span>, 
+          Outlook: <span x-text="overview.unread?.outlook"></span>
+        </p>
+      </div>
+
+      <h3>📊 Statistiques des tâches</h3>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" x-text="stats.total || 0"></div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" x-text="stats.by_status?.todo || 0"></div>
+          <div class="stat-label">À faire</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" x-text="stats.by_status?.doing || 0"></div>
+          <div class="stat-label">En cours</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" x-text="stats.by_status?.done || 0"></div>
+          <div class="stat-label">Terminées</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Vue: Tasks -->
+    <section x-show="currentView === 'tasks'" class="view">
+      <h2>✅ Gestion des tâches</h2>
+
+      <!-- Add Task Form -->
+      <form @submit.prevent="addTask()" class="toolbar">
+        <input 
+          x-model="newTask.title" 
+          type="text" 
+          placeholder="Nouvelle tâche…" 
+          required 
+          maxlength="200"
+          class="grow"
+        />
+        <select x-model="newTask.priority">
+          <option value="low">Low</option>
+          <option value="normal" selected>Normal</option>
+          <option value="high">High</option>
+        </select>
+        <button type="submit" class="primary">➕ Ajouter</button>
+      </form>
+
+      <!-- Filters -->
+      <div class="toolbar">
+        <input 
+          x-model="filters.q" 
+          @input="debouncedLoadTasks()"
+          type="search" 
+          placeholder="🔍 Rechercher…"
+          class="grow"
+        />
+        <select x-model="filters.status" @change="loadTasks()">
+          <option value="">Tous statuts</option>
+          <option value="todo">À faire</option>
+          <option value="doing">En cours</option>
+          <option value="done">Terminées</option>
+          <option value="archived">Archivées</option>
+        </select>
+        <select x-model="filters.priority" @change="loadTasks()">
+          <option value="">Toutes priorités</option>
+          <option value="low">Low</option>
+          <option value="normal">Normal</option>
+          <option value="high">High</option>
+        </select>
+        <select x-model="filters.sort" @change="loadTasks()">
+          <option value="-created_at">Plus récentes</option>
+          <option value="created_at">Plus anciennes</option>
+          <option value="-priority">Priorité ↓</option>
+          <option value="priority">Priorité ↑</option>
+          <option value="title">Titre A-Z</option>
+          <option value="-title">Titre Z-A</option>
+        </select>
+        <button 
+          @click="bulkDelete()" 
+          class="danger"
+          :disabled="selectedTasks.length === 0"
+        >
+          🗑️ Supprimer (<span x-text="selectedTasks.length"></span>)
+        </button>
+      </div>
+
+      <!-- Tasks List -->
+      <ul class="list" x-show="!loading.tasks">
+        <template x-if="tasks.length === 0">
+          <li class="empty">Aucune tâche trouvée.</li>
+        </template>
+        
+        <template x-for="task in tasks" :key="task.id">
+          <li class="task-item">
+            <input 
+              type="checkbox" 
+              class="task-select"
+              :value="task.id"
+              @change="toggleTaskSelection(task.id)"
+              :checked="selectedTasks.includes(task.id)"
+            />
+            <div class="task-main">
+              <span class="task-title" x-text="task.title"></span>
+              <div class="task-meta">
+                <span class="status-badge badge" :class="task.status" x-text="mapStatus(task.status)"></span>
+                <span class="badge" :class="task.priority" x-text="task.priority"></span>
+              </div>
+            </div>
+            <button @click="deleteTask(task.id)" class="danger" style="padding: 6px 10px;">
+              🗑️
+            </button>
+          </li>
+        </template>
+      </ul>
+
+      <div x-show="loading.tasks" class="empty">
+        <div class="spinner"></div> Chargement...
+      </div>
+    </section>
+
+    <!-- Vue: Weather -->
+    <section x-show="currentView === 'weather'" class="view">
+      <h2>🌤️ Météo <span x-text="weather.location" style="color: var(--muted);"></span></h2>
+      
+      <div class="card" x-show="weather.current.temp">
+        <p style="font-size: 1.8rem; margin: 0;">
+          <strong x-text="Math.round(weather.current.temp)"></strong>°C
+        </p>
+        <p x-text="getWeatherDesc(weather.current.weathercode)" style="margin: 5px 0;"></p>
+        <p style="color: var(--muted); font-size: 0.9rem;">
+          Vent: <span x-text="Math.round(weather.current.windspeed)"></span> km/h
+        </p>
+      </div>
+
+      <div x-show="loading.weather" class="card">
+        <div class="spinner"></div> Chargement de la météo...
+      </div>
+
+      <h3>Prochaines heure</h3>
+      <div class="chips">
+        <template x-for="h in weather.hourly.slice(0, 12)" :key="h.time">
+          <span class="pill" x-text="`${new Date(h.time).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})} • ${Math.round(h.temp)}°C • ${getWeatherDesc(h.code)} • ${h.pop || 0}%`"></span>
+        </template>
+      </div>
+
+      <h3>Prochains jours</h3>
+      <div class="chips">
+        <template x-for="d in weather.daily" :key="d.date">
+          <span class="pill" x-text="`${new Date(d.date).toLocaleDateString('fr-FR', {weekday: 'short', day: 'numeric'})} • ${Math.round(d.tmin)}°C–${Math.round(d.tmax)}°C • ${getWeatherDesc(d.code)} • ${d.pop || 0}%`"></span>
+        </template>
+      </div>
+    </section>
+
+    <!-- Vue: Hyperplanning -->
+    <section x-show="currentView === 'hyperplanning'" class="view">
+      <h2>🎓 Hyperplanning</h2>
+      
+      <div class="hp-grid">
+        <!-- Colonne Gauche: Emploi du temps -->
+        <div class="hp-column">
+          <h3 x-text="'📅 Emploi du temps (' + (hyperplanning.schedule.display_date || 'Aujourd\'hui') + ')'"></h3>
+          <div class="card" x-show="hyperplanning.schedule.courses.length === 0">
+            <p class="empty">Aucun cours prévu pour cette date 🎉</p>
+          </div>
+          <div class="timeline">
+            <template x-for="course in hyperplanning.schedule.courses" :key="course.id">
+              <div class="timeline-item">
+                <div class="timeline-time">
+                  <span x-text="course.start"></span>
+                  <span class="text-muted" x-text="course.end"></span>
+                </div>
+                <div class="timeline-content" :class="{'active': isCurrentCourse(course)}">
+                  <div class="timeline-marker"></div>
+                  <h4 x-text="course.subject"></h4>
+                  <p class="location">📍 <span x-text="course.room"></span></p>
+                  <p class="teacher">👨‍🏫 <span x-text="course.teacher"></span></p>
+                  <span class="badge" :class="course.type === 'TP' ? 'high' : 'normal'" x-text="course.type"></span>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Prochains cours -->
+          <div class="card" style="margin-top: 20px;">
+            <h3>⏩ Prochains cours</h3>
+            <ul class="list">
+              <template x-for="course in hyperplanning.nextCourses" :key="course.id">
+                <li class="grade-item"> <!-- Reuse grade-item style for list layout -->
+                  <div class="grade-info">
+                    <strong x-text="course.subject"></strong>
+                    <div style="font-size: 0.85rem; color: var(--muted);">
+                      <span x-text="new Date(course.raw_start).toLocaleDateString('fr-FR', {weekday: 'short', day: 'numeric', month: 'short'})"></span>
+                      • 
+                      <span x-text="course.start + (course.end ? ' - ' + course.end : '')"></span>
+                    </div>
+                  </div>
+                  <div class="grade-value" style="font-size: 0.9rem; color: var(--text);">
+                    <span x-text="course.room"></span>
+                  </div>
+                </li>
+              </template>
+            </ul>
+            <div x-show="hyperplanning.nextCourses.length === 0" class="empty">
+              Aucun cours à venir.
+            </div>
+          </div>
+        </div>
+
+        <!-- Colonne Droite: Notes & Infos -->
+        <div class="hp-column">
+          <h3>📝 Dernières notes</h3>
+          <div class="card">
+            <ul class="list">
+              <template x-for="grade in hyperplanning.grades" :key="grade.id">
+                <li class="grade-item">
+                  <div class="grade-info">
+                    <strong x-text="grade.subject"></strong>
+                    <small x-text="grade.date"></small>
+                  </div>
+                  <div class="grade-value" :class="getGradeColor(grade.value)">
+                    <span x-text="grade.value"></span><span class="grade-max">/20</span>
+                  </div>
+                </li>
+              </template>
+            </ul>
+            <div x-show="hyperplanning.grades.length === 0" class="empty">
+              Aucune note récente (Synchronisé).
+            </div>
+          </div>
+
+          <h3 style="margin-top: 20px;">📚 Enseignements par matière</h3>
+          <div class="card">
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px;">
+              <template x-for="stat in hyperplanning.stats" :key="stat.subject">
+                <div class="stat-card" style="text-align: center; padding: 10px;">
+                  <div class="stat-value" style="font-size: 1.2rem;" x-text="stat.done + 'h'"></div>
+                  <div class="stat-label" style="font-size: 0.8rem; margin-bottom: 5px;" x-text="stat.subject"></div>
+                  <div style="font-size: 0.7rem; color: var(--muted);">
+                    Prévu: <span x-text="stat.planned"></span>h
+                  </div>
+                </div>
+              </template>
+            </div>
+            <div x-show="hyperplanning.stats.length === 0" class="empty">
+              Chargement des statistiques...
+            </div>
+          </div>
+
+          <h3 style="margin-top: 20px;">🔗 Accès rapide</h3>
+          <div class="card">
+            <a href="https://extranet-hp-cgy.ensup.eu/hp-cgy/etudiant" target="_blank" class="hp-link">
+              🌍 Ouvrir Hyperplanning (Extranet) ↗
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Vue: Settings -->
+    <section x-show="currentView === 'settings'" class="view">
+      <h2>⚙️ Paramètres</h2>
+      <div class="card">
+        <h3>ℹ️ Informations</h3>
+        <p><strong>Version:</strong> 1.0.0</p>
+        <p><strong>Mode:</strong> Local (SQLite)</p>
+        <p><strong>API:</strong> <code x-text="API_BASE"></code></p>
+        <hr style="border: 1px solid var(--border); margin: 20px 0;">
+        <p style="color: var(--muted);">
+          🚀 Fonctionnalités à venir : thèmes personnalisés, authentification, 
+          synchronisation cloud, notifications push...
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <small>🥝 AutoDesk Kiwi v1.0 - Local Only - Made with ❤️</small>
+  </footer>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

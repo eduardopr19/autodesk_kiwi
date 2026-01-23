@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(del /f inspect_ical_full.py inspect_ical.py ical_output.txt apirepro_geocode.py)"
+    ]
+  }
+}
