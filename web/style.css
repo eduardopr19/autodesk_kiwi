@@ -1574,65 +1574,40 @@ footer {
   color: var(--muted);
 }
 
-.ambient-sounds-card {
+.lofi-card {
   margin-top: 20px;
 }
 
-.ambient-sounds-list {
+.lofi-header {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.ambient-btn {
-  padding: 8px 16px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text);
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.9rem;
-}
-
-.ambient-btn:hover {
-  background: var(--panel-hover);
-  border-color: var(--accent);
-}
-
-.ambient-btn.active {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
-}
-
-.ambient-volume {
-  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
+  cursor: pointer;
+  padding: 5px 0;
 }
 
-.ambient-volume input[type="range"] {
-  flex: 1;
-  height: 6px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: var(--panel-hover);
-  border-radius: 3px;
-  cursor: pointer;
+.lofi-header:hover {
+  opacity: 0.8;
 }
 
-.ambient-volume input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  background: var(--accent);
-  border-radius: 50%;
-  cursor: pointer;
+.lofi-toggle {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.lofi-player {
+  margin-top: 15px;
+}
+
+.lofi-player iframe {
+  border-radius: 12px;
+}
+
+.lofi-credit {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
 }
 
 .focus-mode-banner {

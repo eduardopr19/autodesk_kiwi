@@ -182,24 +182,21 @@
       </div>
       </div>
 
-      <div class="card ambient-sounds-card">
-        <h4 style="margin-top: 0;">🎧 Sons d'ambiance</h4>
-        <div class="ambient-sounds-list">
-          <template x-for="sound in ambientSounds" :key="sound.id">
-            <button
-              class="ambient-btn"
-              :class="{ active: ambientSound.current === sound.id && ambientSound.playing }"
-              @click="playAmbientSound(sound)"
-              x-text="sound.name">
-            </button>
-          </template>
+      <div class="card lofi-card">
+        <div class="lofi-header" @click="toggleLofiPlayer()">
+          <h4 style="margin: 0;">🎵 Lofi Hip Hop Radio</h4>
+          <span class="lofi-toggle" x-text="lofiPlayer.show ? '▼' : '▶'"></span>
         </div>
-        <div class="ambient-volume" x-show="ambientSound.playing">
-          <span>🔊</span>
-          <input type="range" min="0" max="1" step="0.1"
-            :value="ambientSound.volume"
-            @input="setAmbientVolume(parseFloat($event.target.value))">
-          <button class="btn-icon" @click="stopAmbientSound()" title="Arrêter">⏹️</button>
+        <div class="lofi-player" x-show="lofiPlayer.show" x-transition>
+          <iframe
+            width="100%"
+            height="200"
+            src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=0"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+          <p class="lofi-credit">Lofi Girl - beats to relax/study to</p>
         </div>
       </div>
 

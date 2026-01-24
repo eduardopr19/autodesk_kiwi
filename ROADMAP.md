@@ -22,7 +22,7 @@ This document outlines the major future developments for AutoDesk Kiwi.
 - [x] **Hyperplanning integration** (courses, grades)
 - [x] **Focus mode** - hide distractions, keep essentials
 - [x] **Subtasks** - nested tasks with progress tracking
-- [x] **Ambient sounds** - rain, forest, fire, ocean, lo-fi
+- [x] **Lofi radio player** - Lofi Girl YouTube stream integration
 
 ## 📅 Short Term (Q1)
 

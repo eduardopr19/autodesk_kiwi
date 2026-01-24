@@ -116,11 +116,8 @@ function app() {
 
     focusMode: localStorage.getItem('focusMode') === 'true',
 
-    ambientSound: {
-      current: null,
-      playing: false,
-      volume: 0.5,
-      audio: null
+    lofiPlayer: {
+      show: false
     },
 
     async init() {
@@ -749,51 +746,8 @@ function app() {
       }
     },
 
-    ambientSounds: [
-      { id: 'rain', name: '🌧️ Pluie', url: 'https://assets.mixkit.co/active_storage/sfx/2515/2515-preview.mp3' },
-      { id: 'forest', name: '🌲 Forêt', url: 'https://assets.mixkit.co/active_storage/sfx/2466/2466-preview.mp3' },
-      { id: 'fire', name: '🔥 Feu', url: 'https://assets.mixkit.co/active_storage/sfx/2502/2502-preview.mp3' },
-      { id: 'ocean', name: '🌊 Océan', url: 'https://assets.mixkit.co/active_storage/sfx/2467/2467-preview.mp3' },
-      { id: 'wind', name: '💨 Vent', url: 'https://assets.mixkit.co/active_storage/sfx/2468/2468-preview.mp3' }
-    ],
-
-    playAmbientSound(sound) {
-      if (this.ambientSound.audio) {
-        this.ambientSound.audio.pause();
-        this.ambientSound.audio = null;
-      }
-
-      if (this.ambientSound.current === sound.id && this.ambientSound.playing) {
-        this.ambientSound.playing = false;
-        this.ambientSound.current = null;
-        return;
-      }
-
-      this.ambientSound.audio = new Audio(sound.url);
-      this.ambientSound.audio.loop = true;
-      this.ambientSound.audio.volume = this.ambientSound.volume;
-      this.ambientSound.audio.play().catch(err => {
-        console.error('Audio play error:', err);
-        this.showToast('Impossible de jouer le son', 'error');
-      });
-      this.ambientSound.current = sound.id;
-      this.ambientSound.playing = true;
-    },
-
-    setAmbientVolume(vol) {
-      this.ambientSound.volume = vol;
-      if (this.ambientSound.audio) {
-        this.ambientSound.audio.volume = vol;
-      }
-    },
-
-    stopAmbientSound() {
-      if (this.ambientSound.audio) {
-        this.ambientSound.audio.pause();
-        this.ambientSound.audio = null;
-      }
-      this.ambientSound.playing = false;
-      this.ambientSound.current = null;
+    toggleLofiPlayer() {
+      this.lofiPlayer.show = !this.lofiPlayer.show;
     },
 
     saveQuickNotes() {
