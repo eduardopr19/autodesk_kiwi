@@ -26,10 +26,9 @@ This document outlines the major future developments for AutoDesk Kiwi.
 - [x] **Smooth view transitions** - animated transitions between views
 - [x] **Gamification** - XP system, levels, streaks, and unlockable badges
 - [x] **Habit tracker** - daily habit tracking with 7-day calendar grid
+- [x] **Recurring tasks** - daily, weekly, monthly task recurrence with auto-recreation
 
 ## 📅 Short Term (Q1)
-- [ ] **Task Features**:
-  - [ ] Recurring tasks.
 - **Tech**:
   - [ ] Add unit tests for the backend (`pytest`).
   - [ ] Set up a linter/formatter (`ruff` or `black`).

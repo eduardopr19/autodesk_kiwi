@@ -15,7 +15,7 @@ function app() {
       location: ''
     },
 
-    newTask: { title: '', priority: 'normal', due_date: '', tags: '' },
+    newTask: { title: '', priority: 'normal', due_date: '', tags: '', recurrence: '' },
     editingTask: null,
     filters: {
       q: '',
@@ -330,8 +330,11 @@ function app() {
         if (!payload.tags?.trim()) {
           delete payload.tags;
         }
+        if (!payload.recurrence) {
+          delete payload.recurrence;
+        }
         await this.sendJSON(`${this.API_BASE}/tasks`, payload);
-        this.newTask = { title: '', priority: 'normal', due_date: '', tags: '' };
+        this.newTask = { title: '', priority: 'normal', due_date: '', tags: '', recurrence: '' };
         await this.loadTasks();
         await this.loadStats();
         this.showToast('Tâche ajoutée !', 'success');
@@ -362,6 +365,7 @@ function app() {
       this.editingTask = {
         ...task,
         due_date: task.due_date ? task.due_date.slice(0, 16) : '',
+        recurrence: task.recurrence || '',
         _originalStatus: task.status // Store original status for gamification
       };
     },
@@ -379,7 +383,8 @@ function app() {
           description: this.editingTask.description,
           priority: this.editingTask.priority,
           status: this.editingTask.status,
-          tags: this.editingTask.tags || null
+          tags: this.editingTask.tags || null,
+          recurrence: this.editingTask.recurrence || null
         };
         if (this.editingTask.due_date) {
           payload.due_date = new Date(this.editingTask.due_date).toISOString();
@@ -387,12 +392,19 @@ function app() {
         // Check if task was completed (status changed to done)
         const wasCompleted = this.editingTask._originalStatus !== 'done' && this.editingTask.status === 'done';
         const taskForXP = { priority: this.editingTask.priority };
+        const isRecurring = this.editingTask.recurrence;
 
         await this.fetchJSON(`${this.API_BASE}/tasks/${this.editingTask.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
+
+        // If recurring task was completed, create next occurrence
+        if (wasCompleted && isRecurring) {
+          await this.createNextRecurrence(this.editingTask);
+        }
+
         this.editingTask = null;
         await this.loadTasks();
         await this.loadStats();
@@ -965,6 +977,7 @@ function app() {
 
       const wasCompleted = this.draggingTask.status !== 'done' && newStatus === 'done';
       const taskForXP = { priority: this.draggingTask.priority };
+      const isRecurring = this.draggingTask.recurrence;
 
       try {
         await fetch(`${this.API_BASE}/tasks/${this.draggingTask.id}`, {
@@ -973,6 +986,11 @@ function app() {
           body: JSON.stringify({ status: newStatus })
         });
 
+        // If recurring task was completed, create next occurrence
+        if (wasCompleted && isRecurring) {
+          await this.createNextRecurrence(this.draggingTask);
+        }
+
         this.draggingTask.status = newStatus;
 
         if (wasCompleted) {
@@ -980,6 +998,8 @@ function app() {
         } else {
           this.showToast(`Tâche déplacée vers "${this.mapStatus(newStatus)}"`, 'success');
         }
+
+        await this.loadTasks();
       } catch (err) {
         console.error('Drop error:', err);
         this.showToast('Erreur lors du déplacement', 'error');
@@ -1254,6 +1274,55 @@ function app() {
       const now = new Date();
       const diff = dueDate - now;
       return diff > 0 && diff < 24 * 60 * 60 * 1000;
+    },
+
+    getNextDueDate(currentDueDate, recurrence) {
+      const baseDate = currentDueDate ? new Date(currentDueDate) : new Date();
+      const nextDate = new Date(baseDate);
+
+      switch (recurrence) {
+        case 'daily':
+          nextDate.setDate(nextDate.getDate() + 1);
+          break;
+        case 'weekly':
+          nextDate.setDate(nextDate.getDate() + 7);
+          break;
+        case 'monthly':
+          nextDate.setMonth(nextDate.getMonth() + 1);
+          break;
+      }
+      return nextDate.toISOString();
+    },
+
+    async createNextRecurrence(task) {
+      if (!task.recurrence) return;
+
+      const nextDueDate = this.getNextDueDate(task.due_date, task.recurrence);
+
+      const newTaskPayload = {
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        tags: task.tags || null,
+        recurrence: task.recurrence,
+        due_date: nextDueDate
+      };
+
+      try {
+        await this.sendJSON(`${this.API_BASE}/tasks`, newTaskPayload);
+        this.showToast(`🔄 Prochaine occurrence créée`, 'info');
+      } catch (err) {
+        console.error('Error creating next recurrence:', err);
+      }
+    },
+
+    getRecurrenceLabel(recurrence) {
+      const labels = {
+        'daily': 'Quotidien',
+        'weekly': 'Hebdomadaire',
+        'monthly': 'Mensuel'
+      };
+      return labels[recurrence] || recurrence;
     },
 
     // ============ GAMIFICATION ============

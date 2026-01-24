@@ -1477,6 +1477,24 @@ footer {
   font-weight: 500;
 }
 
+.recurrence-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--success);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.recurrence-badge-small {
+  display: inline-flex;
+  padding: 2px 4px;
+  font-size: 0.7rem;
+}
+
 .task-form {
   flex-wrap: wrap;
 }

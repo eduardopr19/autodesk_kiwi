@@ -426,6 +426,12 @@
           style="width: 150px;"
           title="Tags séparés par des virgules"
         />
+        <select x-model="newTask.recurrence" title="Récurrence">
+          <option value="">Pas de récurrence</option>
+          <option value="daily">🔄 Quotidien</option>
+          <option value="weekly">🔄 Hebdomadaire</option>
+          <option value="monthly">🔄 Mensuel</option>
+        </select>
         <button type="submit" class="primary">➕ Ajouter</button>
       </form>
 
@@ -505,6 +511,9 @@
                   <template x-for="tag in getTaskTags(task)" :key="tag">
                     <span class="tag-badge" x-text="tag"></span>
                   </template>
+                  <span x-show="task.recurrence" class="recurrence-badge" :title="getRecurrenceLabel(task.recurrence)">
+                    🔄 <span x-text="getRecurrenceLabel(task.recurrence)"></span>
+                  </span>
                   <span x-show="task.subtasks?.length" class="subtask-count">
                     📋 <span x-text="task.subtasks?.filter(s => s.status === 'done').length"></span>/<span x-text="task.subtasks?.length"></span>
                   </span>
@@ -573,6 +582,7 @@
                 <div class="kanban-card-title" x-text="task.title"></div>
                 <div class="kanban-card-meta">
                   <span class="badge" :class="task.priority" x-text="task.priority"></span>
+                  <span x-show="task.recurrence" class="recurrence-badge-small" title="Récurrent">🔄</span>
                   <span x-show="task.due_date" class="due-date" :class="{ 'overdue': isOverdue(task) }">
                     📅 <span x-text="formatDueDate(task.due_date)"></span>
                   </span>
@@ -585,7 +595,7 @@
           </div>
         </div>
 
-        
+
         <div class="kanban-column"
              @dragover="onDragOver($event)"
              @dragenter="onDragEnter($event)"
@@ -604,6 +614,7 @@
                 <div class="kanban-card-title" x-text="task.title"></div>
                 <div class="kanban-card-meta">
                   <span class="badge" :class="task.priority" x-text="task.priority"></span>
+                  <span x-show="task.recurrence" class="recurrence-badge-small" title="Récurrent">🔄</span>
                   <span x-show="task.due_date" class="due-date" :class="{ 'overdue': isOverdue(task) }">
                     📅 <span x-text="formatDueDate(task.due_date)"></span>
                   </span>
@@ -616,7 +627,7 @@
           </div>
         </div>
 
-        
+
         <div class="kanban-column"
              @dragover="onDragOver($event)"
              @dragenter="onDragEnter($event)"
@@ -635,6 +646,7 @@
                 <div class="kanban-card-title" x-text="task.title"></div>
                 <div class="kanban-card-meta">
                   <span class="badge" :class="task.priority" x-text="task.priority"></span>
+                  <span x-show="task.recurrence" class="recurrence-badge-small" title="Récurrent">🔄</span>
                   <template x-for="tag in getTaskTags(task)" :key="tag">
                     <span class="tag-badge" x-text="tag"></span>
                   </template>
@@ -691,6 +703,15 @@
             <div class="form-group">
               <label>Tags (séparés par des virgules)</label>
               <input type="text" x-model="editingTask.tags" placeholder="ex: urgent, projet, perso" />
+            </div>
+            <div class="form-group">
+              <label>Récurrence</label>
+              <select x-model="editingTask.recurrence">
+                <option value="">Pas de récurrence</option>
+                <option value="daily">🔄 Quotidien</option>
+                <option value="weekly">🔄 Hebdomadaire</option>
+                <option value="monthly">🔄 Mensuel</option>
+              </select>
             </div>
             <div class="modal-actions">
               <button type="button" @click="closeEditTask()" class="btn">Annuler</button>

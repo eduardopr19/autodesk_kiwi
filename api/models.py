@@ -6,6 +6,7 @@ from pydantic import field_validator
 
 VALID_STATUS = {"todo", "doing", "done", "archived"}
 VALID_PRIORITY = {"low", "normal", "high"}
+VALID_RECURRENCE = {"daily", "weekly", "monthly", None}
 
 
 class Task(SQLModel, table=True):
@@ -18,6 +19,7 @@ class Task(SQLModel, table=True):
     due_date: Optional[datetime] = Field(default=None, index=True)
     tags: Optional[str] = Field(default=None, max_length=500)
     parent_id: Optional[int] = Field(default=None, foreign_key="task.id", index=True)
+    recurrence: Optional[str] = Field(default=None, index=True)
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
@@ -37,6 +39,13 @@ class Task(SQLModel, table=True):
             raise ValueError(f'Status must be one of: {VALID_STATUS}')
         return v
 
+    @field_validator('recurrence')
+    @classmethod
+    def validate_recurrence(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in VALID_RECURRENCE:
+            raise ValueError(f'Recurrence must be one of: {VALID_RECURRENCE}')
+        return v
+
 
 class TaskCreate(SQLModel):
     title: str = Field(min_length=1, max_length=200)
@@ -45,12 +54,20 @@ class TaskCreate(SQLModel):
     due_date: Optional[datetime] = None
     tags: Optional[str] = Field(default=None, max_length=500)
     parent_id: Optional[int] = None
+    recurrence: Optional[str] = None
 
     @field_validator('priority')
     @classmethod
     def validate_priority(cls, v: str) -> str:
         if v not in VALID_PRIORITY:
             raise ValueError(f'Priority must be one of: {VALID_PRIORITY}')
+        return v
+
+    @field_validator('recurrence')
+    @classmethod
+    def validate_recurrence(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in VALID_RECURRENCE:
+            raise ValueError(f'Recurrence must be one of: {VALID_RECURRENCE}')
         return v
 
 
@@ -62,6 +79,7 @@ class TaskUpdate(SQLModel):
     due_date: Optional[datetime] = None
     tags: Optional[str] = Field(default=None, max_length=500)
     parent_id: Optional[int] = None
+    recurrence: Optional[str] = None
 
     @field_validator('priority')
     @classmethod
@@ -77,6 +95,13 @@ class TaskUpdate(SQLModel):
             raise ValueError(f'Status must be one of: {VALID_STATUS}')
         return v
 
+    @field_validator('recurrence')
+    @classmethod
+    def validate_recurrence(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in VALID_RECURRENCE:
+            raise ValueError(f'Recurrence must be one of: {VALID_RECURRENCE}')
+        return v
+
 
 class TaskOut(SQLModel):
     id: int
@@ -87,6 +112,7 @@ class TaskOut(SQLModel):
     due_date: Optional[datetime]
     tags: Optional[str]
     parent_id: Optional[int]
+    recurrence: Optional[str]
     created_at: datetime
     updated_at: datetime
     completed_at: Optional[datetime]
