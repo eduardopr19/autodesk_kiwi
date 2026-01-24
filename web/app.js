@@ -114,6 +114,15 @@ function app() {
 
     availableTags: [],
 
+    focusMode: localStorage.getItem('focusMode') === 'true',
+
+    ambientSound: {
+      current: null,
+      playing: false,
+      volume: 0.5,
+      audio: null
+    },
+
     async init() {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
@@ -360,6 +369,50 @@ function app() {
         this.showToast('Tâche supprimée', 'success');
       } catch (err) {
         this.showToast('Erreur lors de la suppression', 'error');
+      }
+    },
+
+    addingSubtaskTo: null,
+    newSubtaskTitle: '',
+
+    openAddSubtask(task) {
+      this.addingSubtaskTo = task.id;
+      this.newSubtaskTitle = '';
+    },
+
+    closeAddSubtask() {
+      this.addingSubtaskTo = null;
+      this.newSubtaskTitle = '';
+    },
+
+    async addSubtask(parentId) {
+      if (!this.newSubtaskTitle.trim()) return;
+
+      try {
+        await this.sendJSON(`${this.API_BASE}/tasks`, {
+          title: this.newSubtaskTitle.trim(),
+          parent_id: parentId,
+          priority: 'normal'
+        });
+        this.closeAddSubtask();
+        await this.loadTasks();
+        this.showToast('Sous-tâche ajoutée !', 'success');
+      } catch (err) {
+        this.showToast('Erreur lors de l\'ajout', 'error');
+      }
+    },
+
+    async toggleSubtaskStatus(subtask) {
+      const newStatus = subtask.status === 'done' ? 'todo' : 'done';
+      try {
+        await this.fetchJSON(`${this.API_BASE}/tasks/${subtask.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+        await this.loadTasks();
+      } catch (err) {
+        this.showToast('Erreur lors de la mise à jour', 'error');
       }
     },
 
@@ -684,6 +737,60 @@ function app() {
       this.theme = this.theme === 'dark' ? 'light' : 'dark';
       localStorage.setItem('theme', this.theme);
       this.applyTheme();
+    },
+
+    toggleFocusMode() {
+      this.focusMode = !this.focusMode;
+      localStorage.setItem('focusMode', this.focusMode);
+      if (this.focusMode) {
+        this.showToast('Mode Focus activé - Concentre-toi ! 🎯', 'success');
+      } else {
+        this.showToast('Mode Focus désactivé', 'info');
+      }
+    },
+
+    ambientSounds: [
+      { id: 'rain', name: '🌧️ Pluie', url: 'https://cdn.pixabay.com/audio/2022/05/16/audio_1333dfb409.mp3' },
+      { id: 'forest', name: '🌲 Forêt', url: 'https://cdn.pixabay.com/audio/2022/03/10/audio_4dedf5bf94.mp3' },
+      { id: 'fire', name: '🔥 Feu de cheminée', url: 'https://cdn.pixabay.com/audio/2021/08/09/audio_a7834d239a.mp3' },
+      { id: 'ocean', name: '🌊 Océan', url: 'https://cdn.pixabay.com/audio/2022/04/27/audio_67bcb99019.mp3' },
+      { id: 'lofi', name: '🎵 Lo-Fi', url: 'https://cdn.pixabay.com/audio/2022/11/16/audio_11f8186715.mp3' }
+    ],
+
+    playAmbientSound(sound) {
+      if (this.ambientSound.audio) {
+        this.ambientSound.audio.pause();
+        this.ambientSound.audio = null;
+      }
+
+      if (this.ambientSound.current === sound.id && this.ambientSound.playing) {
+        this.ambientSound.playing = false;
+        this.ambientSound.current = null;
+        return;
+      }
+
+      this.ambientSound.audio = new Audio(sound.url);
+      this.ambientSound.audio.loop = true;
+      this.ambientSound.audio.volume = this.ambientSound.volume;
+      this.ambientSound.audio.play();
+      this.ambientSound.current = sound.id;
+      this.ambientSound.playing = true;
+    },
+
+    setAmbientVolume(vol) {
+      this.ambientSound.volume = vol;
+      if (this.ambientSound.audio) {
+        this.ambientSound.audio.volume = vol;
+      }
+    },
+
+    stopAmbientSound() {
+      if (this.ambientSound.audio) {
+        this.ambientSound.audio.pause();
+        this.ambientSound.audio = null;
+      }
+      this.ambientSound.playing = false;
+      this.ambientSound.current = null;
     },
 
     saveQuickNotes() {

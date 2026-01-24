@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, timezone
 from sqlmodel import SQLModel, Field
 from pydantic import field_validator
@@ -17,6 +17,7 @@ class Task(SQLModel, table=True):
     status: str = Field(default="todo", index=True)
     due_date: Optional[datetime] = Field(default=None, index=True)
     tags: Optional[str] = Field(default=None, max_length=500)
+    parent_id: Optional[int] = Field(default=None, foreign_key="task.id", index=True)
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
@@ -43,6 +44,7 @@ class TaskCreate(SQLModel):
     priority: str = Field(default="normal")
     due_date: Optional[datetime] = None
     tags: Optional[str] = Field(default=None, max_length=500)
+    parent_id: Optional[int] = None
 
     @field_validator('priority')
     @classmethod
@@ -59,6 +61,7 @@ class TaskUpdate(SQLModel):
     status: Optional[str] = None
     due_date: Optional[datetime] = None
     tags: Optional[str] = Field(default=None, max_length=500)
+    parent_id: Optional[int] = None
 
     @field_validator('priority')
     @classmethod
@@ -83,9 +86,11 @@ class TaskOut(SQLModel):
     status: str
     due_date: Optional[datetime]
     tags: Optional[str]
+    parent_id: Optional[int]
     created_at: datetime
     updated_at: datetime
     completed_at: Optional[datetime]
+    subtasks: List["TaskOut"] = []
 
 
 class BulkDeletePayload(SQLModel):

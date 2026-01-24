@@ -54,6 +54,9 @@
       <button class="tab" :class="{ active: currentView === 'settings' }" @click="currentView = 'settings'">
         ⚙️ Paramètres
       </button>
+      <button class="tab theme-toggle" @click="toggleFocusMode()" :class="{ active: focusMode }" title="Mode Focus">
+        🎯
+      </button>
       <button class="tab theme-toggle" @click="toggleTheme()" :title="theme === 'dark' ? 'Mode clair' : 'Mode sombre'">
         <span x-show="theme === 'dark'">☀️</span>
         <span x-show="theme === 'light'">🌙</span>
@@ -91,7 +94,7 @@
         </div>
       </div>
 
-      <div class="card quote-card" x-show="overview.quote">
+      <div class="card quote-card" x-show="overview.quote && !focusMode">
         <div class="quote-content">
           <p class="quote-text">"<span x-text="overview.quote"></span>"</p>
           <p class="quote-author" x-show="overview.quote_author">— <span x-text="overview.quote_author"></span></p>
@@ -99,7 +102,7 @@
         <button class="btn-icon refresh-quote" @click="refreshQuote()" title="Nouvelle citation">🔄</button>
       </div>
 
-      <div class="card" x-show="hyperplanning.nextCourses.length || weather.current.temp || email.count !== null">
+      <div class="card" x-show="!focusMode && (hyperplanning.nextCourses.length || weather.current.temp || email.count !== null)">
         <p x-show="hyperplanning.nextCourses.length"><strong>📆 Prochain cours:</strong>
           <span x-text="hyperplanning.nextCourses[0]?.subject"></span> à
           <span x-text="hyperplanning.nextCourses[0]?.start"></span>
@@ -116,6 +119,7 @@
       </div>
 
       
+      <div x-show="!focusMode">
       <h3>📝 Notes rapides</h3>
       <div class="card quick-notes-card">
         <textarea
@@ -125,8 +129,9 @@
           placeholder="Écrivez vos notes ici..."
         ></textarea>
       </div>
+      </div>
 
-      
+      <div x-show="!focusMode">
       <h3>🔗 Liens favoris <button class="btn-icon" @click="showAddLink = !showAddLink" title="Ajouter un lien">➕</button></h3>
       <div class="card favorite-links-card">
         
@@ -146,8 +151,9 @@
         </div>
         <p x-show="!favoriteLinks.length && !showAddLink" class="empty-links">Aucun lien favori. Cliquez sur ➕ pour en ajouter.</p>
       </div>
+      </div>
 
-      
+      <div x-show="!focusMode">
       <h3>⏳ Compte à rebours <button class="btn-icon" @click="showAddCountdown = !showAddCountdown" title="Ajouter un événement">➕</button></h3>
       <div class="card countdowns-card">
         
@@ -174,7 +180,30 @@
         </div>
         <p x-show="!countdowns.length && !showAddCountdown" class="empty-countdowns">Aucun compte à rebours. Cliquez sur ➕ pour en ajouter.</p>
       </div>
+      </div>
 
+      <div class="card ambient-sounds-card">
+        <h4 style="margin-top: 0;">🎧 Sons d'ambiance</h4>
+        <div class="ambient-sounds-list">
+          <template x-for="sound in ambientSounds" :key="sound.id">
+            <button
+              class="ambient-btn"
+              :class="{ active: ambientSound.current === sound.id && ambientSound.playing }"
+              @click="playAmbientSound(sound)"
+              x-text="sound.name">
+            </button>
+          </template>
+        </div>
+        <div class="ambient-volume" x-show="ambientSound.playing">
+          <span>🔊</span>
+          <input type="range" min="0" max="1" step="0.1"
+            :value="ambientSound.volume"
+            @input="setAmbientVolume(parseFloat($event.target.value))">
+          <button class="btn-icon" @click="stopAmbientSound()" title="Arrêter">⏹️</button>
+        </div>
+      </div>
+
+      <div x-show="!focusMode">
       <h3>📊 Statistiques des tâches</h3>
       <div class="stats-grid">
         <div class="stat-card">
@@ -194,8 +223,9 @@
           <div class="stat-label">Terminées</div>
         </div>
       </div>
+      </div>
 
-      
+      <div x-show="!focusMode">
       <h3>🎵 Spotify</h3>
       <div class="card spotify-card">
         
@@ -246,9 +276,10 @@
           </div>
         </div>
       </div>
+      </div>
     </section>
 
-    
+
     <section x-show="currentView === 'tasks'" class="view">
       <h2>✅ Gestion des tâches</h2>
 
@@ -339,35 +370,69 @@
         </template>
         
         <template x-for="task in tasks" :key="task.id">
-          <li class="task-item">
-            <input
-              type="checkbox"
-              class="task-select"
-              :value="task.id"
-              @change="toggleTaskSelection(task.id)"
-              :checked="selectedTasks.includes(task.id)"
-            />
-            <div class="task-main">
-              <span class="task-title" x-text="task.title"></span>
-              <div class="task-meta">
-                <span class="status-badge badge" :class="task.status" x-text="mapStatus(task.status)"></span>
-                <span class="badge" :class="task.priority" x-text="task.priority"></span>
-                <span x-show="task.due_date" class="due-date" :class="{ 'overdue': isOverdue(task), 'due-soon': isDueSoon(task) }">
-                  📅 <span x-text="formatDueDate(task.due_date)"></span>
-                </span>
-                <template x-for="tag in getTaskTags(task)" :key="tag">
-                  <span class="tag-badge" x-text="tag"></span>
-                </template>
+          <li class="task-item-wrapper">
+            <div class="task-item">
+              <input
+                type="checkbox"
+                class="task-select"
+                :value="task.id"
+                @change="toggleTaskSelection(task.id)"
+                :checked="selectedTasks.includes(task.id)"
+              />
+              <div class="task-main">
+                <span class="task-title" x-text="task.title"></span>
+                <div class="task-meta">
+                  <span class="status-badge badge" :class="task.status" x-text="mapStatus(task.status)"></span>
+                  <span class="badge" :class="task.priority" x-text="task.priority"></span>
+                  <span x-show="task.due_date" class="due-date" :class="{ 'overdue': isOverdue(task), 'due-soon': isDueSoon(task) }">
+                    📅 <span x-text="formatDueDate(task.due_date)"></span>
+                  </span>
+                  <template x-for="tag in getTaskTags(task)" :key="tag">
+                    <span class="tag-badge" x-text="tag"></span>
+                  </template>
+                  <span x-show="task.subtasks?.length" class="subtask-count">
+                    📋 <span x-text="task.subtasks?.filter(s => s.status === 'done').length"></span>/<span x-text="task.subtasks?.length"></span>
+                  </span>
+                </div>
+              </div>
+              <div class="task-actions">
+                <button @click="openAddSubtask(task)" class="btn" style="padding: 6px 10px;" title="Ajouter sous-tâche">
+                  ➕
+                </button>
+                <button @click="openEditTask(task)" class="btn" style="padding: 6px 10px;">
+                  ✏️
+                </button>
+                <button @click="deleteTask(task.id)" class="danger" style="padding: 6px 10px;">
+                  🗑️
+                </button>
               </div>
             </div>
-            <div class="task-actions">
-              <button @click="openEditTask(task)" class="btn" style="padding: 6px 10px;">
-                ✏️
-              </button>
-              <button @click="deleteTask(task.id)" class="danger" style="padding: 6px 10px;">
-                🗑️
-              </button>
-            </div>
+            <ul class="subtasks-list" x-show="task.subtasks?.length || addingSubtaskTo === task.id">
+              <template x-for="subtask in task.subtasks" :key="subtask.id">
+                <li class="subtask-item" :class="{ 'done': subtask.status === 'done' }">
+                  <input
+                    type="checkbox"
+                    :checked="subtask.status === 'done'"
+                    @change="toggleSubtaskStatus(subtask)"
+                  />
+                  <span class="subtask-title" x-text="subtask.title"></span>
+                  <button @click="deleteTask(subtask.id)" class="btn-icon subtask-delete" title="Supprimer">✕</button>
+                </li>
+              </template>
+              <li class="subtask-add-form" x-show="addingSubtaskTo === task.id">
+                <input
+                  type="text"
+                  x-model="newSubtaskTitle"
+                  @keyup.enter="addSubtask(task.id)"
+                  @keyup.escape="closeAddSubtask()"
+                  placeholder="Nouvelle sous-tâche..."
+                  class="subtask-input"
+                  x-ref="subtaskInput"
+                />
+                <button @click="addSubtask(task.id)" class="btn btn-sm">✓</button>
+                <button @click="closeAddSubtask()" class="btn btn-sm">✕</button>
+              </li>
+            </ul>
           </li>
         </template>
       </ul>
