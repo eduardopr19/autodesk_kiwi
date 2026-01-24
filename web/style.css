@@ -1742,3 +1742,326 @@ footer {
   padding: 2px 8px;
   border-radius: 10px;
 }
+
+/* ============ GAMIFICATION ============ */
+
+.gamification-card {
+  background: linear-gradient(135deg, var(--panel) 0%, rgba(74, 163, 255, 0.05) 100%);
+}
+
+.gamification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.level-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.level-icon {
+  font-size: 2.5rem;
+}
+
+.level-details {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.level-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.xp-bar {
+  width: 150px;
+  height: 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #8b5cf6);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.xp-text {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.streak-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg);
+  padding: 12px 20px;
+  border-radius: 12px;
+}
+
+.streak-fire {
+  font-size: 1.5rem;
+}
+
+.streak-count {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+.streak-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.gamification-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 15px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.gam-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gam-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.gam-stat-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.badges-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 0.95rem;
+}
+
+.badges-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: 10px;
+  opacity: 0.4;
+  filter: grayscale(1);
+  transition: all 0.3s ease;
+  cursor: help;
+}
+
+.badge-item.unlocked {
+  opacity: 1;
+  filter: grayscale(0);
+  background: linear-gradient(135deg, var(--panel-hover) 0%, rgba(74, 163, 255, 0.1) 100%);
+  border: 1px solid var(--accent);
+}
+
+.badge-icon {
+  font-size: 1.5rem;
+}
+
+.badge-name {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 4px;
+  text-align: center;
+}
+
+.badge-item.unlocked .badge-name {
+  color: var(--text);
+}
+
+/* ============ HABIT TRACKER ============ */
+
+.habit-tracker-card {
+  padding: 16px;
+}
+
+.add-habit-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.add-habit-form .input-field {
+  flex: 1;
+  min-width: 150px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.icon-select {
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.habits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.habit-row {
+  display: grid;
+  grid-template-columns: 1fr repeat(7, 40px) 60px;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 0;
+}
+
+.habit-row.habit-header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  margin-bottom: 5px;
+}
+
+.habit-name-col {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.habit-icon {
+  font-size: 1.2rem;
+}
+
+.habit-name {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.habit-delete {
+  opacity: 0;
+  color: var(--danger);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  transition: opacity 0.2s;
+}
+
+.habit-row:hover .habit-delete {
+  opacity: 1;
+}
+
+.habit-day-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.habit-day-col.today {
+  background: var(--panel-hover);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.day-name {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.day-num {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.habit-check {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 2px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: transparent;
+  font-size: 0.9rem;
+}
+
+.habit-check:hover {
+  border-color: var(--accent);
+  background: rgba(74, 163, 255, 0.1);
+}
+
+.habit-check.done {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+
+.habit-streak-col {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.habit-streak {
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+.empty-habits {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0;
+  text-align: center;
+  padding: 20px;
+}
+
+@media (max-width: 768px) {
+  .gamification-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .habit-row {
+    grid-template-columns: 1fr repeat(7, 30px) 50px;
+  }
+
+  .habit-check {
+    width: 24px;
+    height: 24px;
+  }
+
+  .badges-grid {
+    justify-content: center;
+  }
+}

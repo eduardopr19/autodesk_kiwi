@@ -221,6 +221,125 @@
       </div>
       </div>
 
+      <!-- Gamification Section -->
+      <div x-show="!focusMode">
+      <h3>🎮 Progression</h3>
+      <div class="card gamification-card">
+        <div class="gamification-header">
+          <div class="level-info">
+            <span class="level-icon" x-text="getCurrentLevel().icon"></span>
+            <div class="level-details">
+              <span class="level-name">Niveau <span x-text="getCurrentLevel().level"></span> - <span x-text="getCurrentLevel().name"></span></span>
+              <div class="xp-bar">
+                <div class="xp-fill" :style="`width: ${getLevelProgress()}%`"></div>
+              </div>
+              <span class="xp-text"><span x-text="gamification.xp"></span> XP</span>
+            </div>
+          </div>
+          <div class="streak-info">
+            <span class="streak-fire">🔥</span>
+            <span class="streak-count" x-text="gamification.streak"></span>
+            <span class="streak-label">jours</span>
+          </div>
+        </div>
+
+        <div class="gamification-stats">
+          <div class="gam-stat">
+            <span class="gam-stat-value" x-text="gamification.totalTasksCompleted"></span>
+            <span class="gam-stat-label">Tâches</span>
+          </div>
+          <div class="gam-stat">
+            <span class="gam-stat-value" x-text="gamification.totalPomodorosCompleted"></span>
+            <span class="gam-stat-label">Pomodoros</span>
+          </div>
+          <div class="gam-stat">
+            <span class="gam-stat-value" x-text="gamification.unlockedBadges.length"></span>
+            <span class="gam-stat-label">Badges</span>
+          </div>
+        </div>
+
+        <div class="badges-section">
+          <h4>🏅 Badges</h4>
+          <div class="badges-grid">
+            <template x-for="badge in badges" :key="badge.id">
+              <div class="badge-item" :class="{ 'unlocked': isBadgeUnlocked(badge.id) }" :title="badge.desc">
+                <span class="badge-icon" x-text="badge.icon"></span>
+                <span class="badge-name" x-text="badge.name"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <!-- Habit Tracker Section -->
+      <div x-show="!focusMode">
+      <h3>📋 Habitudes <button class="btn-icon" @click="showAddHabit = !showAddHabit" title="Ajouter une habitude">➕</button></h3>
+      <div class="card habit-tracker-card">
+        <!-- Add habit form -->
+        <div class="add-habit-form" x-show="showAddHabit" x-transition>
+          <input type="text" x-model="newHabit.name" placeholder="Nom de l'habitude" class="input-field" @keyup.enter="addHabit()">
+          <select x-model="newHabit.icon" class="icon-select">
+            <option value="✅">✅</option>
+            <option value="💪">💪</option>
+            <option value="📖">📖</option>
+            <option value="💧">💧</option>
+            <option value="🧘">🧘</option>
+            <option value="🏃">🏃</option>
+            <option value="🍎">🍎</option>
+            <option value="💤">💤</option>
+            <option value="✍️">✍️</option>
+            <option value="🎯">🎯</option>
+          </select>
+          <button class="btn primary" @click="addHabit()">Ajouter</button>
+        </div>
+
+        <!-- Habit list with calendar grid -->
+        <div class="habits-list" x-show="habits.length">
+          <!-- Header with days -->
+          <div class="habit-row habit-header">
+            <div class="habit-name-col"></div>
+            <template x-for="day in getLast7Days()" :key="day.date">
+              <div class="habit-day-col" :class="{ 'today': day.isToday }">
+                <span class="day-name" x-text="day.dayName"></span>
+                <span class="day-num" x-text="day.dayNum"></span>
+              </div>
+            </template>
+            <div class="habit-streak-col">Streak</div>
+          </div>
+
+          <!-- Habit rows -->
+          <template x-for="habit in habits" :key="habit.id">
+            <div class="habit-row">
+              <div class="habit-name-col">
+                <span class="habit-icon" x-text="habit.icon"></span>
+                <span class="habit-name" x-text="habit.name"></span>
+                <button class="btn-icon habit-delete" @click="removeHabit(habit.id)" title="Supprimer">✕</button>
+              </div>
+              <template x-for="day in getLast7Days()" :key="day.date">
+                <div class="habit-day-col">
+                  <button
+                    class="habit-check"
+                    :class="{ 'done': isHabitDone(habit.id, day.date) }"
+                    @click="toggleHabitDay(habit.id, day.date)"
+                  >
+                    <span x-show="isHabitDone(habit.id, day.date)">✓</span>
+                  </button>
+                </div>
+              </template>
+              <div class="habit-streak-col">
+                <span class="habit-streak" x-text="getHabitStreak(habit.id)"></span>🔥
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <p x-show="!habits.length && !showAddHabit" class="empty-habits">
+          Aucune habitude. Cliquez sur ➕ pour en ajouter.
+        </p>
+      </div>
+      </div>
+
       <div x-show="!focusMode">
       <h3>🎵 Spotify</h3>
       <div class="card spotify-card">

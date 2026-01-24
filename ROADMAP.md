@@ -24,6 +24,8 @@ This document outlines the major future developments for AutoDesk Kiwi.
 - [x] **Subtasks** - nested tasks with progress tracking
 - [x] **Lofi radio player** - Lofi Girl YouTube stream integration
 - [x] **Smooth view transitions** - animated transitions between views
+- [x] **Gamification** - XP system, levels, streaks, and unlockable badges
+- [x] **Habit tracker** - daily habit tracking with 7-day calendar grid
 
 ## 📅 Short Term (Q1)
 - [ ] **Task Features**:
@@ -57,6 +59,4 @@ This document outlines the major future developments for AutoDesk Kiwi.
 
 - Voice command to add tasks.
 - Productivity analysis (progress charts).
-- Habit tracker.
 - Study statistics with time tracking.
-- Gamification (streaks, badges, XP).

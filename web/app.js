@@ -121,6 +121,45 @@ function app() {
       show: false
     },
 
+    // Gamification system
+    gamification: JSON.parse(localStorage.getItem('gamification') || JSON.stringify({
+      xp: 0,
+      streak: 0,
+      lastActiveDate: null,
+      totalTasksCompleted: 0,
+      totalPomodorosCompleted: 0,
+      unlockedBadges: []
+    })),
+
+    badges: [
+      { id: 'first_task', name: 'Premier pas', icon: '🎯', desc: 'Compléter sa première tâche', condition: (g) => g.totalTasksCompleted >= 1 },
+      { id: 'task_10', name: 'Productif', icon: '⚡', desc: 'Compléter 10 tâches', condition: (g) => g.totalTasksCompleted >= 10 },
+      { id: 'task_50', name: 'Machine', icon: '🤖', desc: 'Compléter 50 tâches', condition: (g) => g.totalTasksCompleted >= 50 },
+      { id: 'task_100', name: 'Légende', icon: '🏆', desc: 'Compléter 100 tâches', condition: (g) => g.totalTasksCompleted >= 100 },
+      { id: 'streak_3', name: 'En forme', icon: '🔥', desc: '3 jours consécutifs', condition: (g) => g.streak >= 3 },
+      { id: 'streak_7', name: 'Semaine parfaite', icon: '💪', desc: '7 jours consécutifs', condition: (g) => g.streak >= 7 },
+      { id: 'streak_30', name: 'Inarrêtable', icon: '👑', desc: '30 jours consécutifs', condition: (g) => g.streak >= 30 },
+      { id: 'pomodoro_10', name: 'Concentré', icon: '🍅', desc: '10 pomodoros complétés', condition: (g) => g.totalPomodorosCompleted >= 10 },
+      { id: 'pomodoro_50', name: 'Zen master', icon: '🧘', desc: '50 pomodoros complétés', condition: (g) => g.totalPomodorosCompleted >= 50 },
+      { id: 'xp_500', name: 'Niveau up!', icon: '📈', desc: 'Atteindre 500 XP', condition: (g) => g.xp >= 500 },
+      { id: 'xp_2000', name: 'Expert', icon: '🎓', desc: 'Atteindre 2000 XP', condition: (g) => g.xp >= 2000 }
+    ],
+
+    levels: [
+      { level: 1, name: 'Débutant', icon: '🌱', minXp: 0 },
+      { level: 2, name: 'Apprenti', icon: '🌿', minXp: 100 },
+      { level: 3, name: 'Productif', icon: '🌳', minXp: 300 },
+      { level: 4, name: 'Expert', icon: '⭐', minXp: 600 },
+      { level: 5, name: 'Maître', icon: '🏆', minXp: 1000 },
+      { level: 6, name: 'Légende', icon: '👑', minXp: 2000 }
+    ],
+
+    // Habit tracker
+    habits: JSON.parse(localStorage.getItem('habits') || '[]'),
+    habitHistory: JSON.parse(localStorage.getItem('habitHistory') || '{}'),
+    showAddHabit: false,
+    newHabit: { name: '', icon: '✅' },
+
     async init() {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
@@ -131,6 +170,7 @@ function app() {
       this.loadFiltersFromStorage();
       this.initTheme();
       this.startClock();
+      this.initGamification();
       await Promise.all([
         this.loadOverview(),
         this.loadTasks(),
@@ -321,7 +361,8 @@ function app() {
     openEditTask(task) {
       this.editingTask = {
         ...task,
-        due_date: task.due_date ? task.due_date.slice(0, 16) : ''
+        due_date: task.due_date ? task.due_date.slice(0, 16) : '',
+        _originalStatus: task.status // Store original status for gamification
       };
     },
 
@@ -343,6 +384,10 @@ function app() {
         if (this.editingTask.due_date) {
           payload.due_date = new Date(this.editingTask.due_date).toISOString();
         }
+        // Check if task was completed (status changed to done)
+        const wasCompleted = this.editingTask._originalStatus !== 'done' && this.editingTask.status === 'done';
+        const taskForXP = { priority: this.editingTask.priority };
+
         await this.fetchJSON(`${this.API_BASE}/tasks/${this.editingTask.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -351,7 +396,12 @@ function app() {
         this.editingTask = null;
         await this.loadTasks();
         await this.loadStats();
-        this.showToast('Tâche modifiée !', 'success');
+
+        if (wasCompleted) {
+          this.onTaskCompleted(taskForXP);
+        } else {
+          this.showToast('Tâche modifiée !', 'success');
+        }
       } catch (err) {
         this.showToast('Erreur lors de la modification', 'error');
       }
@@ -913,6 +963,9 @@ function app() {
 
       if (!this.draggingTask || this.draggingTask.status === newStatus) return;
 
+      const wasCompleted = this.draggingTask.status !== 'done' && newStatus === 'done';
+      const taskForXP = { priority: this.draggingTask.priority };
+
       try {
         await fetch(`${this.API_BASE}/tasks/${this.draggingTask.id}`, {
           method: 'PATCH',
@@ -921,7 +974,12 @@ function app() {
         });
 
         this.draggingTask.status = newStatus;
-        this.showToast(`Tâche déplacée vers "${this.mapStatus(newStatus)}"`, 'success');
+
+        if (wasCompleted) {
+          this.onTaskCompleted(taskForXP);
+        } else {
+          this.showToast(`Tâche déplacée vers "${this.mapStatus(newStatus)}"`, 'success');
+        }
       } catch (err) {
         console.error('Drop error:', err);
         this.showToast('Erreur lors du déplacement', 'error');
@@ -1053,6 +1111,8 @@ function app() {
 
       if (this.pomodoro.mode === 'work') {
         this.pomodoro.completedPomodoros++;
+        this.onPomodoroCompleted(); // Add XP for completing pomodoro
+
         if (this.pomodoro.completedPomodoros % 4 === 0) {
           this.pomodoro.mode = 'longBreak';
           this.pomodoro.minutes = this.pomodoro.longBreakDuration;
@@ -1194,6 +1254,228 @@ function app() {
       const now = new Date();
       const diff = dueDate - now;
       return diff > 0 && diff < 24 * 60 * 60 * 1000;
+    },
+
+    // ============ GAMIFICATION ============
+
+    initGamification() {
+      this.updateStreak();
+      this.checkBadges();
+    },
+
+    saveGamification() {
+      localStorage.setItem('gamification', JSON.stringify(this.gamification));
+    },
+
+    getToday() {
+      return new Date().toISOString().split('T')[0];
+    },
+
+    updateStreak() {
+      const today = this.getToday();
+      const lastActive = this.gamification.lastActiveDate;
+
+      if (!lastActive) return;
+
+      const lastDate = new Date(lastActive);
+      const todayDate = new Date(today);
+      const diffDays = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
+
+      if (diffDays > 1) {
+        // Streak broken
+        this.gamification.streak = 0;
+        this.saveGamification();
+      }
+    },
+
+    addXP(amount, reason) {
+      const today = this.getToday();
+      const wasActiveToday = this.gamification.lastActiveDate === today;
+
+      this.gamification.xp += amount;
+
+      if (!wasActiveToday) {
+        // New day activity
+        const lastActive = this.gamification.lastActiveDate;
+        if (lastActive) {
+          const lastDate = new Date(lastActive);
+          const todayDate = new Date(today);
+          const diffDays = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
+          if (diffDays === 1) {
+            this.gamification.streak++;
+          } else {
+            this.gamification.streak = 1;
+          }
+        } else {
+          this.gamification.streak = 1;
+        }
+      }
+
+      this.gamification.lastActiveDate = today;
+      this.saveGamification();
+      this.checkBadges();
+
+      if (reason) {
+        this.showToast(`+${amount} XP - ${reason}`, 'success');
+      }
+    },
+
+    onTaskCompleted(task) {
+      const xpAmount = task.priority === 'high' ? 20 : task.priority === 'low' ? 5 : 10;
+      this.gamification.totalTasksCompleted++;
+      this.addXP(xpAmount, 'Tâche complétée');
+    },
+
+    onPomodoroCompleted() {
+      this.gamification.totalPomodorosCompleted++;
+      this.addXP(5, 'Pomodoro terminé');
+    },
+
+    getCurrentLevel() {
+      let currentLevel = this.levels[0];
+      for (const level of this.levels) {
+        if (this.gamification.xp >= level.minXp) {
+          currentLevel = level;
+        }
+      }
+      return currentLevel;
+    },
+
+    getNextLevel() {
+      const current = this.getCurrentLevel();
+      const nextIndex = this.levels.findIndex(l => l.level === current.level) + 1;
+      return this.levels[nextIndex] || null;
+    },
+
+    getLevelProgress() {
+      const current = this.getCurrentLevel();
+      const next = this.getNextLevel();
+      if (!next) return 100;
+
+      const xpInLevel = this.gamification.xp - current.minXp;
+      const xpNeeded = next.minXp - current.minXp;
+      return Math.floor((xpInLevel / xpNeeded) * 100);
+    },
+
+    checkBadges() {
+      let newBadges = [];
+      for (const badge of this.badges) {
+        if (!this.gamification.unlockedBadges.includes(badge.id) && badge.condition(this.gamification)) {
+          this.gamification.unlockedBadges.push(badge.id);
+          newBadges.push(badge);
+        }
+      }
+      if (newBadges.length > 0) {
+        this.saveGamification();
+        for (const badge of newBadges) {
+          this.showToast(`🏅 Badge débloqué: ${badge.icon} ${badge.name}!`, 'success');
+        }
+      }
+    },
+
+    isBadgeUnlocked(badgeId) {
+      return this.gamification.unlockedBadges.includes(badgeId);
+    },
+
+    // ============ HABIT TRACKER ============
+
+    saveHabits() {
+      localStorage.setItem('habits', JSON.stringify(this.habits));
+    },
+
+    saveHabitHistory() {
+      localStorage.setItem('habitHistory', JSON.stringify(this.habitHistory));
+    },
+
+    addHabit() {
+      if (!this.newHabit.name.trim()) return;
+
+      const habit = {
+        id: Date.now(),
+        name: this.newHabit.name.trim(),
+        icon: this.newHabit.icon || '✅',
+        createdAt: new Date().toISOString()
+      };
+
+      this.habits.push(habit);
+      this.saveHabits();
+      this.newHabit = { name: '', icon: '✅' };
+      this.showAddHabit = false;
+      this.showToast('Habitude ajoutée !', 'success');
+    },
+
+    removeHabit(id) {
+      if (!confirm('Supprimer cette habitude ?')) return;
+      this.habits = this.habits.filter(h => h.id !== id);
+      this.saveHabits();
+      this.showToast('Habitude supprimée', 'info');
+    },
+
+    toggleHabitDay(habitId, date) {
+      const key = `${habitId}_${date}`;
+      if (this.habitHistory[key]) {
+        delete this.habitHistory[key];
+      } else {
+        this.habitHistory[key] = true;
+        // Give XP for completing habit
+        this.addXP(3, 'Habitude complétée');
+      }
+      this.saveHabitHistory();
+    },
+
+    isHabitDone(habitId, date) {
+      return !!this.habitHistory[`${habitId}_${date}`];
+    },
+
+    getHabitStreak(habitId) {
+      let streak = 0;
+      const today = new Date();
+
+      for (let i = 0; i < 365; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+
+        if (this.isHabitDone(habitId, dateStr)) {
+          streak++;
+        } else if (i > 0) {
+          break;
+        }
+      }
+      return streak;
+    },
+
+    getHabitCompletionRate(habitId) {
+      const last30Days = [];
+      const today = new Date();
+
+      for (let i = 0; i < 30; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        if (this.isHabitDone(habitId, dateStr)) {
+          last30Days.push(true);
+        }
+      }
+
+      return Math.round((last30Days.length / 30) * 100);
+    },
+
+    getLast7Days() {
+      const days = [];
+      const today = new Date();
+
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        days.push({
+          date: date.toISOString().split('T')[0],
+          dayName: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
+          dayNum: date.getDate(),
+          isToday: i === 0
+        });
+      }
+      return days;
     }
   };
 }
