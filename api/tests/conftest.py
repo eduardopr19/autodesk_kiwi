@@ -1,5 +1,6 @@
 """Pytest fixtures for API testing."""
 
+import contextlib
 import os
 import sys
 
@@ -10,16 +11,17 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["DATABASE_URL"] = "sqlite:///./test_data.db"
 os.environ["DEBUG"] = "false"
 
-import pytest
-from fastapi.testclient import TestClient
-from sqlmodel import SQLModel
+import pytest  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+from sqlmodel import SQLModel  # noqa: E402
 
 # Clear any cached settings
-from config import get_settings
+from config import get_settings  # noqa: E402
+
 get_settings.cache_clear()
 
-from main import app
-from db import engine
+from db import engine  # noqa: E402
+from main import app  # noqa: E402
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -30,10 +32,8 @@ def setup_database():
     SQLModel.metadata.drop_all(engine)
     # Clean up test database file
     if os.path.exists("./test_data.db"):
-        try:
+        with contextlib.suppress(OSError):
             os.remove("./test_data.db")
-        except:
-            pass
 
 
 @pytest.fixture(scope="function")

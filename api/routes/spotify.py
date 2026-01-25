@@ -1,12 +1,12 @@
-import os
 import base64
-import requests
+import os
 from datetime import datetime, timedelta
-from typing import Optional
+
+import requests
+from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -27,13 +27,13 @@ _tokens = {
 
 class SpotifyTrack(BaseModel):
     is_playing: bool = False
-    track_name: Optional[str] = None
-    artist_name: Optional[str] = None
-    album_name: Optional[str] = None
-    album_art: Optional[str] = None
-    progress_ms: Optional[int] = None
-    duration_ms: Optional[int] = None
-    track_url: Optional[str] = None
+    track_name: str | None = None
+    artist_name: str | None = None
+    album_name: str | None = None
+    album_art: str | None = None
+    progress_ms: int | None = None
+    duration_ms: int | None = None
+    track_url: str | None = None
     error: str = ""
 
 

@@ -1,12 +1,12 @@
-import os
-import imaplib
+import contextlib
 import email
-import ssl
+import imaplib
+import os
 from email.header import decode_header
-from typing import List, Optional
-from fastapi import APIRouter, Query
-from pydantic import BaseModel
+
 from dotenv import load_dotenv
+from fastapi import APIRouter
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -21,7 +21,7 @@ class EmailItem(BaseModel):
 
 class EmailSummary(BaseModel):
     count_unread: int
-    emails: List[EmailItem] = []
+    emails: list[EmailItem] = []
     error: str = ""
 
 class EmailDetail(BaseModel):
@@ -30,7 +30,7 @@ class EmailDetail(BaseModel):
     sender: str
     date: str
     body: str
-    html_body: Optional[str] = None
+    html_body: str | None = None
     error: str = ""
 
 
@@ -63,13 +63,13 @@ def get_email_body(msg):
                 try:
                     charset = part.get_content_charset() or "utf-8"
                     body = part.get_payload(decode=True).decode(charset, errors="ignore")
-                except:
+                except Exception:
                     body = str(part.get_payload())
             elif content_type == "text/html" and not html_body:
                 try:
                     charset = part.get_content_charset() or "utf-8"
                     html_body = part.get_payload(decode=True).decode(charset, errors="ignore")
-                except:
+                except Exception:
                     html_body = str(part.get_payload())
     else:
         content_type = msg.get_content_type()
@@ -78,7 +78,7 @@ def get_email_body(msg):
             payload = msg.get_payload(decode=True)
             if payload:
                 body = payload.decode(charset, errors="ignore")
-        except:
+        except Exception:
             body = str(msg.get_payload())
 
         if content_type == "text/html":
@@ -99,10 +99,8 @@ def connect_to_mail():
 
     try:
         mail = imaplib.IMAP4(host, port)
-        try:
+        with contextlib.suppress(Exception):
             mail.starttls()
-        except:
-            pass
         mail.login(user, password)
         return mail, None
     except ConnectionRefusedError:
@@ -194,7 +192,7 @@ def get_email_detail(email_id: str):
 
 class EmailHistoryResponse(BaseModel):
     total_count: int
-    emails: List[EmailItem] = []
+    emails: list[EmailItem] = []
     has_more: bool = False
     error: str = ""
 
@@ -262,8 +260,8 @@ class SendEmailRequest(BaseModel):
 @router.post("/proton/send")
 def send_proton_email(email_data: SendEmailRequest):
     import smtplib
-    from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
 
     smtp_host = os.getenv("PROTON_BRIDGE_SMTP_HOST", "127.0.0.1")
     smtp_port = int(os.getenv("PROTON_BRIDGE_SMTP_PORT", "1025"))
@@ -281,10 +279,8 @@ def send_proton_email(email_data: SendEmailRequest):
         msg.attach(MIMEText(email_data.body, 'plain'))
 
         server = smtplib.SMTP(smtp_host, smtp_port)
-        try:
+        with contextlib.suppress(Exception):
             server.starttls()
-        except:
-            pass
         server.login(smtp_user, smtp_pass)
 
         server.send_message(msg)

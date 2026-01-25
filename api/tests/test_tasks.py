@@ -1,6 +1,5 @@
 """Unit tests for Tasks API endpoints."""
 
-import pytest
 from fastapi import status
 
 

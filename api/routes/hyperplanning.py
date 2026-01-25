@@ -1,13 +1,15 @@
-from fastapi import APIRouter, HTTPException
-import requests
-from icalendar import Calendar
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
+
 import pytz
+import requests
+from fastapi import APIRouter, HTTPException
+from icalendar import Calendar
 from sqlmodel import select
+
 from config import get_settings
-from logger import setup_logger
 from db import get_session
-from models import Grade, GradeCreate, GradeImportPayload, GradeOut
+from logger import setup_logger
+from models import Grade, GradeImportPayload, GradeOut
 
 settings = get_settings()
 logger = setup_logger("hyperplanning")
@@ -120,7 +122,7 @@ def get_courses():
 
     except Exception as e:
         logger.error(f"Error fetching Hyperplanning courses: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch courses from Hyperplanning")
+        raise HTTPException(status_code=500, detail="Failed to fetch courses from Hyperplanning") from None
 
 @router.get("/next-courses")
 def get_next_courses():
@@ -159,7 +161,7 @@ def get_next_courses():
 
     except Exception as e:
         logger.error(f"Error fetching next courses: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch next courses")
+        raise HTTPException(status_code=500, detail="Failed to fetch next courses") from None
 
 @router.get("/stats")
 def get_stats():
@@ -213,7 +215,7 @@ def get_stats():
 
     except Exception as e:
         logger.error(f"Error fetching Hyperplanning stats: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch Hyperplanning statistics")
+        raise HTTPException(status_code=500, detail="Failed to fetch Hyperplanning statistics") from None
 
 
 @router.get("/grades", response_model=list[GradeOut])
@@ -225,7 +227,7 @@ def get_grades():
             return grades
     except Exception as e:
         logger.error(f"Error fetching grades: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from None
 
 
 @router.post("/grades/import")
@@ -259,7 +261,7 @@ def import_grades(payload: GradeImportPayload):
 
     except Exception as e:
         logger.error(f"Error importing grades: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from None
 
 
 @router.delete("/grades/clear")
@@ -282,4 +284,4 @@ def clear_grades():
 
     except Exception as e:
         logger.error(f"Error clearing grades: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from None

@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Query
+
 import requests
-from typing import Optional
+from fastapi import APIRouter, HTTPException, Query
+
 from config import get_settings
 from logger import setup_logger
 
@@ -12,7 +13,7 @@ SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": settings.user_agent})
 
 
-def _get_json(url: str, params: dict, timeout: Optional[float] = None):
+def _get_json(url: str, params: dict, timeout: float | None = None):
     try:
         response = SESSION.get(
             url,
@@ -23,16 +24,16 @@ def _get_json(url: str, params: dict, timeout: Optional[float] = None):
         return response.json()
     except requests.exceptions.Timeout:
         logger.error(f"Timeout calling {url}")
-        raise HTTPException(status_code=504, detail="External API timeout - please try again later")
+        raise HTTPException(status_code=504, detail="External API timeout - please try again later") from None
     except requests.exceptions.ConnectionError:
         logger.error(f"Connection error calling {url}")
-        raise HTTPException(status_code=503, detail="External API unreachable - service may be down")
+        raise HTTPException(status_code=503, detail="External API unreachable - service may be down") from None
     except requests.exceptions.HTTPError as e:
         logger.error(f"HTTP error calling {url}: {e.response.status_code}")
-        raise HTTPException(status_code=502, detail="External API returned an error")
+        raise HTTPException(status_code=502, detail="External API returned an error") from None
     except requests.exceptions.RequestException as e:
         logger.error(f"Unexpected error calling {url}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch external data")
+        raise HTTPException(status_code=500, detail="Failed to fetch external data") from None
 
 
 @router.get("/weather")

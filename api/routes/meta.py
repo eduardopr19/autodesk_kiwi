@@ -1,7 +1,9 @@
-from fastapi import APIRouter
-from datetime import datetime, timezone
-import requests
 import random
+from datetime import datetime, timezone
+
+import requests
+from fastapi import APIRouter
+
 from config import get_settings
 from logger import setup_logger
 

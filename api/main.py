@@ -1,22 +1,18 @@
+import os
+import sys
+import time
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from contextlib import asynccontextmanager
-import time
-import os
-import sys
 
 from config import get_settings
 from db import init_db
+from exceptions import AppException, app_exception_handler, general_exception_handler
 from logger import setup_logger
-from exceptions import (
-    AppException,
-    app_exception_handler,
-    general_exception_handler
-)
-from routes import tasks, meta, integrations, hyperplanning, email, spotify
+from routes import email, hyperplanning, integrations, meta, spotify, tasks
 
 settings = get_settings()
 logger = setup_logger("main")

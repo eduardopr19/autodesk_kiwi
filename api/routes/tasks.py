@@ -1,17 +1,22 @@
 from datetime import datetime, timezone
-from typing import Optional, List, Any, cast
+from typing import Any, cast
 
 from fastapi import APIRouter, HTTPException, Query, status
+from sqlalchemy import asc, desc, func
 from sqlmodel import select
-from sqlalchemy import desc, asc, func
 
-from models import (
-    Task, TaskCreate, TaskUpdate, TaskOut, BulkDeletePayload,
-    VALID_STATUS, VALID_PRIORITY
-)
 from db import get_session
 from exceptions import TaskNotFoundException
 from logger import setup_logger
+from models import (
+    VALID_PRIORITY,
+    VALID_STATUS,
+    BulkDeletePayload,
+    Task,
+    TaskCreate,
+    TaskOut,
+    TaskUpdate,
+)
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 logger = setup_logger("tasks")
@@ -19,7 +24,7 @@ logger = setup_logger("tasks")
 TBL = cast(Any, Task).__table__.c
 
 
-def task_to_out(task: Task, subtasks: List[Task] = None) -> TaskOut:
+def task_to_out(task: Task, subtasks: list[Task] = None) -> TaskOut:
     return TaskOut(
         id=task.id,
         title=task.title,
@@ -37,17 +42,17 @@ def task_to_out(task: Task, subtasks: List[Task] = None) -> TaskOut:
     )
 
 
-@router.get("", response_model=List[TaskOut])
+@router.get("", response_model=list[TaskOut])
 def list_tasks(
-    q: Optional[str] = Query(None, max_length=200, description="Search in title"),
-    status: Optional[str] = Query(None, description=f"Filter by status: {VALID_STATUS}"),
-    priority: Optional[str] = Query(None, description=f"Filter by priority: {VALID_PRIORITY}"),
+    q: str | None = Query(None, max_length=200, description="Search in title"),
+    status: str | None = Query(None, description=f"Filter by status: {VALID_STATUS}"),
+    priority: str | None = Query(None, description=f"Filter by priority: {VALID_PRIORITY}"),
     sort: str = Query("-created_at", description="Sort field"),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     include_subtasks: bool = Query(True, description="Include subtasks in response"),
 ):
-    stmt = select(Task).where(TBL.parent_id == None)
+    stmt = select(Task).where(TBL.parent_id.is_(None))
 
     if q:
         stmt = stmt.where(TBL.title.ilike(f"%{q}%"))
@@ -217,19 +222,19 @@ def bulk_delete_tasks(payload: BulkDeletePayload):
 @router.get("/stats/summary", response_model=dict)
 def get_stats():
     with get_session() as session:
-        total = session.exec(select(func.count(Task.id)).where(Task.parent_id == None)).one()
+        total = session.exec(select(func.count(Task.id)).where(Task.parent_id.is_(None))).one()
 
         by_status = {}
         for s in VALID_STATUS:
             count = session.exec(
-                select(func.count(Task.id)).where(Task.status == s, Task.parent_id == None)
+                select(func.count(Task.id)).where(Task.status == s, Task.parent_id.is_(None))
             ).one()
             by_status[s] = count
 
         by_priority = {}
         for p in VALID_PRIORITY:
             count = session.exec(
-                select(func.count(Task.id)).where(Task.priority == p, Task.parent_id == None)
+                select(func.count(Task.id)).where(Task.priority == p, Task.parent_id.is_(None))
             ).one()
             by_priority[p] = count
 

@@ -1,5 +1,6 @@
-from fastapi import HTTPException, Request, status
+from fastapi import Request
 from fastapi.responses import JSONResponse
+
 from logger import setup_logger
 
 logger = setup_logger("exceptions")
