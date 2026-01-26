@@ -230,45 +230,231 @@ autodesk_kiwi/
 
 ## 🗺️ Roadmap
 
-### 🔜 Short Term (Q1 2026)
-- [ ] **UI/UX Enhancements**
-  - [ ] Smoother view transitions
-  - [ ] Focus mode (hide distractions)
-- [ ] **Task Features**
-  - [ ] Due dates with reminders
-  - [ ] Subtasks support
-  - [ ] Custom tags/categories
-- [ ] **Developer Experience**
-  - [ ] Unit tests with pytest
-  - [ ] Code formatting with black/ruff
-  - [ ] Docker support
+### 🎯 **Priority Features (Next Up)**
 
-### 🔮 Medium Term (Q2-Q3 2026)
-- [ ] **Authentication & Multi-User**
-  - [ ] JWT-based login system
-  - [ ] User management
-  - [ ] Secure API endpoints
-- [ ] **Cloud Sync**
-  - [ ] Optional cloud backup (S3, Google Drive)
-  - [ ] Cross-device synchronization
-- [ ] **Customization**
-  - [ ] Custom themes (colors, fonts)
-  - [ ] Configurable dashboard widgets
+These are the recommended improvements to implement first:
 
-### 🚀 Long Term (Q4 2026+)
-- [ ] **Advanced Features**
-  - [ ] Push notifications for tasks/events
-  - [ ] Calendar integrations (Google, Outlook read/write)
-  - [ ] Notion/Obsidian sync
-- [ ] **Mobile App**
-  - [ ] Progressive Web App (PWA)
-  - [ ] Native mobile app (React Native/Flutter)
-- [ ] **Analytics**
-  - [ ] Productivity insights
-  - [ ] Progress charts
-  - [ ] Time tracking
+1. **🏷️ Tags/Labels System** - Organize tasks with colored tags
+2. **🔍 Search & Advanced Filters** - Find tasks quickly with powerful search
+3. **📱 PWA & Mobile Experience** - Use Kiwi as a mobile app with offline support
 
-> See [ROADMAP.md](ROADMAP.md) for detailed plans and ideas.
+---
+
+### 📋 **Task Management Enhancements**
+
+- [ ] **Tags/Labels personnalisés**
+  - Custom colored tags (work, personal, urgent, study, etc.)
+  - Filter tasks by multiple tags
+  - Tag statistics and insights
+
+- [ ] **Search & Advanced Filters**
+  - Full-text search across title and description
+  - Multi-criteria filtering (date + priority + status + tags)
+  - Save custom filter presets
+  - Sort by multiple fields
+
+- [ ] **Calendar View**
+  - Monthly calendar visualization
+  - Drag & drop to reschedule tasks
+  - Week view with time blocks
+
+- [ ] **Subtasks & Checklists**
+  - Add checkable steps for each task
+  - Progress tracking (3/5 completed)
+  - Nested subtasks support
+
+---
+
+### 📊 **Analytics & Productivity**
+
+- [x] **Productivity Statistics** ✅ (Implemented)
+  - Charts for daily/weekly completion rates
+  - Task distribution by status and priority
+
+- [ ] **Streaks & Gamification**
+  - Track consecutive days with completed tasks
+  - Achievement badges and milestones
+  - Productivity score calculation
+
+- [ ] **Weekly Reports**
+  - Automated email summary every Monday
+  - Weekly productivity insights
+  - Goal tracking and suggestions
+
+- [ ] **Time Tracking**
+  - Built-in timer for tasks
+  - Time estimates vs actual time spent
+  - Statistics per project/subject
+
+---
+
+### 🎨 **Interface & User Experience**
+
+- [ ] **Dark Mode Automation**
+  - Auto-switch based on time (day/night)
+  - System theme detection
+  - Custom schedule (e.g., dark mode 8pm-7am)
+
+- [ ] **Keyboard Shortcuts**
+  - `N` - New task
+  - `S` - Focus search
+  - `/` - Command palette
+  - `Esc` - Close modals
+  - Arrow keys for navigation
+
+- [ ] **View Modes**
+  - Compact list view (more items visible)
+  - Card view (current)
+  - Kanban board view
+
+- [ ] **Customizable Dashboard**
+  - Drag & drop widgets
+  - Hide/show sections
+  - Custom widget sizes
+
+---
+
+### 🔔 **Notifications & Reminders**
+
+- [ ] **Task Reminders**
+  - Browser desktop notifications
+  - Configurable timing (15 min, 1 hour, 1 day before)
+  - Recurring reminders for repeated tasks
+
+- [ ] **Hyperplanning Alerts**
+  - Notification 15 minutes before class
+  - Daily summary of tomorrow's schedule
+  - Changed course detection
+
+- [ ] **Productivity Nudges**
+  - "You haven't completed any tasks today"
+  - "5 overdue tasks need attention"
+  - Streak reminders
+
+---
+
+### 💾 **Import/Export Features**
+
+- [x] **Grades Import (JSON)** ✅ (Implemented)
+
+- [ ] **Task Export**
+  - CSV format for Excel/Google Sheets
+  - JSON format for backups
+  - PDF report generation
+  - iCal format for calendar apps
+
+- [ ] **Import from Other Apps**
+  - Trello board import
+  - Todoist migration
+  - Notion database sync
+  - CSV/Excel import
+
+- [ ] **Automatic Backups**
+  - Daily database backups
+  - Export to cloud storage (optional)
+  - Version history (restore from backup)
+
+---
+
+### 🔗 **Integrations & API**
+
+- [ ] **Complete REST API**
+  - Full CRUD for all resources
+  - Swagger/OpenAPI documentation
+  - API authentication (JWT tokens)
+  - Rate limiting
+
+- [ ] **Webhooks**
+  - Trigger actions on task completion
+  - Integrate with Zapier/IFTTT
+  - Custom automation workflows
+
+- [ ] **Third-Party Integrations**
+  - Google Calendar (read/write)
+  - Microsoft Outlook sync
+  - Slack notifications
+  - Discord webhooks
+
+---
+
+### 📱 **Mobile & Offline**
+
+- [ ] **Progressive Web App (PWA)**
+  - Install as native app on mobile
+  - Offline mode with service workers
+  - Push notifications on mobile
+  - App icon and splash screen
+
+- [ ] **Responsive Improvements**
+  - Better mobile navigation
+  - Touch-optimized interactions
+  - Swipe gestures (swipe to complete/delete)
+
+- [ ] **Mobile-First Features**
+  - Quick add widget
+  - Voice input for tasks
+  - Location-based reminders
+
+---
+
+### 🤖 **AI & Automation**
+
+- [ ] **Smart Suggestions**
+  - Detect patterns in task creation
+  - Suggest recurrence rules
+  - Auto-categorize tasks by content
+
+- [ ] **Task Templates**
+  - Reusable task templates
+  - Project templates ("Morning Routine", "Weekly Review")
+  - Template marketplace/sharing
+
+- [ ] **Natural Language Input**
+  - "Buy milk tomorrow at 3pm" → Parsed task
+  - Smart date/time detection
+  - Priority keywords ("urgent", "low priority")
+
+---
+
+### 🔐 **Security & Multi-User**
+
+- [ ] **User Authentication**
+  - JWT-based login system
+  - Secure password hashing
+  - Session management
+
+- [ ] **Multi-User Support**
+  - User accounts and profiles
+  - Shared workspaces (optional)
+  - Permission levels
+
+- [ ] **Data Privacy**
+  - End-to-end encryption option
+  - GDPR compliance tools
+  - Data export/deletion
+
+---
+
+### 🧪 **Developer Experience**
+
+- [x] **Docker Support** ✅ (Implemented)
+- [x] **Code Linting (Ruff)** ✅ (Implemented)
+- [x] **Unit Tests** ✅ (Implemented)
+
+- [ ] **CI/CD Pipeline**
+  - GitHub Actions for testing
+  - Automated deployment
+  - Version tagging
+
+- [ ] **Documentation**
+  - API documentation improvements
+  - Code comments and docstrings
+  - Architecture diagrams
+
+---
+
+> 💡 **Want to contribute?** Pick any feature from this roadmap and open a PR!
+> See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
