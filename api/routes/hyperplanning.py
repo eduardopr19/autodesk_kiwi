@@ -71,6 +71,13 @@ def parse_event(component):
 
 @router.get("/courses")
 def get_courses():
+    if not settings.hyperplanning_url:
+        return {
+            "date": datetime.now().date().isoformat(),
+            "display_date": "Non configuré",
+            "courses": []
+        }
+
     try:
         response = requests.get(settings.hyperplanning_url)
         response.raise_for_status()
@@ -126,6 +133,9 @@ def get_courses():
 
 @router.get("/next-courses")
 def get_next_courses():
+    if not settings.hyperplanning_url:
+        return []
+
     try:
         response = requests.get(settings.hyperplanning_url)
         response.raise_for_status()
@@ -165,6 +175,9 @@ def get_next_courses():
 
 @router.get("/stats")
 def get_stats():
+    if not settings.hyperplanning_url:
+        return []
+
     try:
         response = requests.get(settings.hyperplanning_url)
         response.raise_for_status()
